@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">두리안캠</string>
+    <string name="action_settings">설정</string>
+    <string name="easy_login">간편 로그인</string>
+    <string name="please_choose_mode">모드를 선택해 주세요</string>
+    <!--<string-array name="day_of_week">-->
+        <!--<item>일요일</item>-->
+        <!--<item>월요일</item>-->
+        <!--<item>화요일</item>-->
+        <!--<item>수요일</item>-->
+        <!--<item>목요일</item>-->
+        <!--<item>금요일</item>-->
+        <!--<item>토요일</item>-->
+    <!--</string-array>-->
+</resources>

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "175455013954",
+    "project_id": "duriancam"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:175455013954:android:4e1afae8f2cd9764",
+        "android_client_info": {
+          "package_name": "kr.durian.duriancam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "175455013954-vcegb3v10hffre5eppsejecbi66bm2j8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kr.durian.duriancam",
+            "certificate_hash": "201BA6D97619C64BA15405C17095E35723D954B7"
+          }
+        },
+        {
+          "client_id": "175455013954-4vsrc77gd8frp0dsldov003cmi3rsgvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSgYp6NFvPlXvJuEF4xgJUd8xfaiqn7OM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
