@@ -38,7 +38,7 @@ public class DataService extends Service {
     private final IDataService.Stub mBinder = new IDataService.Stub() {
         @Override
         public void connectWebSocket() throws RemoteException {
-            connectWebSocketInServer();
+            connectWebSocketInService();
         }
 
         @Override
@@ -71,6 +71,11 @@ public class DataService extends Service {
 
             return flag;
         }
+
+        @Override
+        public void sendOffer() throws RemoteException {
+            sendOfferInService();
+        }
     };
 
     @Override
@@ -86,7 +91,7 @@ public class DataService extends Service {
         super.onCreate();
     }
 
-    private void connectWebSocketInServer() {
+    private void connectWebSocketInService() {
         Logger.d(TAG, "connectWebSocketInServer");
         URI uri;
         try {
@@ -164,6 +169,10 @@ public class DataService extends Service {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendOfferInService(){
+
     }
 
     private void sendMessageWithWebSocket(String json) {

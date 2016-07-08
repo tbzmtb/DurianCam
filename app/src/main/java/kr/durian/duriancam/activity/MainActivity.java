@@ -14,8 +14,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -59,14 +57,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mHandler = new DataHandler();
         DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.btn_viewer).setOnClickListener(this);
         findViewById(R.id.btn_camera).setOnClickListener(this);
@@ -297,14 +287,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void valueChanged(long value) throws RemoteException {
             if (value == Config.MODE_START) {
-                Logger.d(TAG, "카메라 시작 ");
-//            if (value == Config.MODE_CAMERA) {
-//                Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-//                startActivity(intent);
-//            } else {
-//                Intent intent = new Intent(MainActivity.this, ViewerActivity.class);
-//                startActivity(intent);
-//            }
+                Logger.d(TAG, "start camera ");
+                if (value == Config.MODE_CAMERA) {
+                    Intent intent = new Intent(MainActivity.this, CameraActivity.class);
+                    startActivity(intent);
+                } else {
+                    Intent intent = new Intent(MainActivity.this, ViewerActivity.class);
+                    startActivity(intent);
+                }
             }
         }
     };
