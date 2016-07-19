@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -30,6 +31,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.asynctask.InsertUserInfoTask;
@@ -60,17 +64,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.btn_viewer).setOnClickListener(this);
         findViewById(R.id.btn_camera).setOnClickListener(this);
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestIdToken(getString(R.string.server_client_id))
-                .build();
+        if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestEmail()
+                    .requestIdToken(getString(R.string.server_client_id))
+                    .build();
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
-
-
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this, this)
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .build();
+        }
+        bindService(new Intent(this,
+                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     public class DataHandler extends Handler {
@@ -89,15 +95,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause() {
         super.onPause();
         Logger.d(TAG, "MainActivity onPause Call");
-        unbindService(mConnection);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (!Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
         Logger.d(TAG, "MainActivity onResume Call");
-        bindService(new Intent(this,
-                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mConnection);
+
     }
 
     @Override
@@ -165,14 +181,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(this, getString(R.string.please_choose_mode), Toast.LENGTH_SHORT).show();
             return;
         }
-        if (!DataPreference.getEasyLogin()) {
-            if (mGoogleApiClient.isConnected()) {
-                mGoogleApiClient.clearDefaultAccountAndReconnect();
+        if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
+            if (!DataPreference.getEasyLogin()) {
+                if (mGoogleApiClient.isConnected()) {
+                    mGoogleApiClient.clearDefaultAccountAndReconnect();
+                }
             }
-        }
 
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+            Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        } else {
+            String displayName = "김선영";
+            String emailString = "tbzmtb@gmail.com";
+            String userId = "100398893839570743730";
+            String token = "";
+            DataPreference.setLoginName(displayName);
+            DataPreference.setLoginEmail(emailString);
+            DataPreference.setLoginNumber(userId);
+            DataPreference.setLoginToken(token);
+
+            DataPreference.setRtcid(userId);
+            DataPreference.setPeerRtcid("tbzmtb");
+
+
+            String type = Config.DEVICE_TYPE_ANDROID_VALUE;
+            String uuid = Build.SERIAL;
+            String serial_no = Build.SERIAL;
+            String password = "";
+            String master_rtcid = "";
+            String cert_master = "";
+            String email = "tbzmtb@gmail.com";
+            String cert_email = "";
+            String name = "김선영";
+            String disable = "0";
+
+
+            new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, master_rtcid,
+                    cert_master, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
     }
 
     private void signOut() {
@@ -242,11 +288,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             DataPreference.setLoginEmail(emailString);
             DataPreference.setLoginNumber(userId);
             DataPreference.setLoginToken(token);
+            if (DataPreference.getMode() == Config.MODE_CAMERA) {
+                DataPreference.setRtcid(userId);
+                DataPreference.setPeerRtcid(emailString.split("@")[0]);
 
-            String rtcid = getRtcid(emailString, DataPreference.getMode());
-            DataPreference.setRtcid(rtcid);
+            } else {
+                DataPreference.setRtcid(emailString.split("@")[0]);
+                DataPreference.setPeerRtcid(userId);
+            }
+
             String type = Config.DEVICE_TYPE_ANDROID_VALUE;
-            String uuid = "";
+            String uuid = Build.SERIAL;
             String serial_no = Build.SERIAL;
             String password = "";
             String master_rtcid = "";
@@ -257,17 +309,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String disable = "0";
 
 
-            new InsertUserInfoTask(this, mHandler, rtcid, type, uuid, serial_no, password, master_rtcid,
+            new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, master_rtcid,
                     cert_master, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         } else {
-            // Signed out, show unauthenticated UI.
             Logger.d(TAG, "google login fail");
         }
-    }
-
-    private String getRtcid(String email, int mode) {
-        return email + "_" + mode;
     }
 
     @Override
@@ -285,16 +332,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     final IDataServiceCallback mCallbcak = new IDataServiceCallback.Stub() {
 
         @Override
-        public void valueChanged(long value) throws RemoteException {
-            if (value == Config.MODE_START) {
-                Logger.d(TAG, "start camera ");
-                if (value == Config.MODE_CAMERA) {
-                    Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-                    startActivity(intent);
-                } else {
-                    Intent intent = new Intent(MainActivity.this, ViewerActivity.class);
-                    startActivity(intent);
+        public void valueChanged(int value, String data) throws RemoteException {
+            if (value == Config.HANDLER_MODE_START) {
+                try {
+                    JSONObject json = new JSONObject(data);
+                    if(!json.isNull(Config.PARAM_DESCRIPTION)){
+                        String desciption = json.getString(Config.PARAM_DESCRIPTION);
+                        if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
+                            Intent intent = new Intent(MainActivity.this, CameraActivity.class);
+                            startActivity(intent);
+                        }
+                    }else{
+                        Intent intent = new Intent(MainActivity.this, CameraActivity.class);
+                        startActivity(intent);
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+
+
             }
         }
     };
@@ -307,9 +365,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_viewer:
                 DataPreference.setMode(Config.MODE_VIEWER);
+                DataPreference.setPeerMode(Config.MODE_CAMERA);
                 break;
             case R.id.btn_camera:
                 DataPreference.setMode(Config.MODE_CAMERA);
+                DataPreference.setPeerMode(Config.MODE_VIEWER);
                 break;
         }
     }

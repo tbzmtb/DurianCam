@@ -144,9 +144,9 @@ public class SimpleStreamSet extends StreamSet {
     public static SimpleStreamSet defaultConfig(boolean sendAudio, boolean sendVideo) {
         return new SimpleStreamSet(MicrophoneSource.getInstance(), CameraSource.getInstance(), sendAudio, sendVideo);
     }
-    public static SimpleStreamSet defaultConfig() {
-        return new SimpleStreamSet();
-    }
+//    public static SimpleStreamSet defaultConfig() {
+//        return new SimpleStreamSet();
+//    }
 
     @Override
     protected List<? extends Stream> getStreams() {

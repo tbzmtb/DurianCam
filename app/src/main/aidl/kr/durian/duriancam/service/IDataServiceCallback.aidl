@@ -2,5 +2,5 @@
 package kr.durian.duriancam.service;
 
 interface IDataServiceCallback {
-	oneway void valueChanged(long value);
+	oneway void valueChanged(int what, String data);
 }

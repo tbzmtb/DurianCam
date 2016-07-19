@@ -76,7 +76,7 @@ public class ViewerActivity extends AppCompatActivity {
     final IDataServiceCallback mCallbcak = new IDataServiceCallback.Stub() {
 
         @Override
-        public void valueChanged(long value) throws RemoteException {
+        public void valueChanged(int value, String data) throws RemoteException {
 
 
         }

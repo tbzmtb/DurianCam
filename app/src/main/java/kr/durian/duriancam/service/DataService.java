@@ -9,6 +9,8 @@ import android.os.Message;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 
+import com.ericsson.research.owr.Owr;
+
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
@@ -39,6 +41,10 @@ public class DataService extends Service {
         @Override
         public void connectWebSocket() throws RemoteException {
             connectWebSocketInService();
+        }
+        @Override
+        public void closeWebSocket() throws RemoteException {
+            closeWebsocketInService();
         }
 
         @Override
@@ -73,8 +79,8 @@ public class DataService extends Service {
         }
 
         @Override
-        public void sendOffer() throws RemoteException {
-            sendOfferInService();
+        public void sendData(String data) throws RemoteException {
+            sendOfferInService(data);
         }
     };
 
@@ -84,6 +90,10 @@ public class DataService extends Service {
 
     }
 
+    static {
+        Owr.init();
+        Owr.runInBackground();
+    }
 
     @Override
     public void onCreate() {
@@ -100,7 +110,6 @@ public class DataService extends Service {
             e.printStackTrace();
             return;
         }
-//        closeWebsocket();
         HashMap<String, String> httpHeaders = new HashMap<>();
         httpHeaders.put("Sec-WebSocket-Protocol", "ns-rtc");
         Logger.d(TAG, "mWebSocketClient == start ");
@@ -124,9 +133,38 @@ public class DataService extends Service {
                 try {
                     JSONObject jsono = new JSONObject(message);
                     switch (jsono.get(Config.PARAM_TYPE).toString()) {
-                        case Config.SOCKET_MESSAGE_LOGIN_ACK: {
+                        case Config.PARAM_LOGIN_ACK: {
                             Message msg = Message.obtain();
-                            msg.what = Config.MODE_START;
+                            msg.what = Config.HANDLER_MODE_START;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_OFFER: {
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_OFFER;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_OFFER_ACK: {
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_OFFER_ACK;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_ANSWER: {
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_ANSWER;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_CANDIDATE: {
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_CANDIDATE;
+                            msg.obj = message;
                             handler.sendMessage(msg);
                             break;
                         }
@@ -171,14 +209,14 @@ public class DataService extends Service {
         }
     }
 
-    public void sendOfferInService(){
-
+    public void sendOfferInService(String data) {
+        sendMessageWithWebSocket(data);
     }
 
-    private void sendMessageWithWebSocket(String json) {
-        Logger.w("!!!", "sendMessageWithWebSocket json = " + json);
+    private void sendMessageWithWebSocket(String data) {
+        Logger.w("!!!", "sendMessageWithWebSocket json = " + data);
         try {
-            mWebSocketClient.send(json);
+            mWebSocketClient.send(data);
         } catch (WebsocketNotConnectedException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
@@ -189,11 +227,12 @@ public class DataService extends Service {
     @Override
     public void onDestroy() {
         Logger.d(TAG, "Service is onDestory");
-        closeWebsocket();
+        closeWebsocketInService();
         super.onDestroy();
     }
 
-    private void closeWebsocket(){
+    private void closeWebsocketInService() {
+        Logger.d(TAG, "closeWebsocketInService call mWebSocketClient = "+mWebSocketClient);
         if (mWebSocketClient != null) {
             mWebSocketClient.close();
             mWebSocketClient = null;
@@ -205,23 +244,20 @@ public class DataService extends Service {
         @Override
         public boolean handleMessage(Message msg) {
 
-            switch (msg.what) {
-                case Config.MODE_START: {
-                    int N = callbacks.beginBroadcast();
-                    for (int i = 0; i < N; i++) {
-                        try {
-                            IDataServiceCallback cb = callbacks.getBroadcastItem(i);
-                            cb.valueChanged(Config.MODE_START);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
+            int N = callbacks.beginBroadcast();
+            for (int i = 0; i < N; i++) {
+                try {
+                    if (msg.obj == null) {
+                        msg.obj = "";
                     }
-                    callbacks.finishBroadcast();
-                    break;
+                    IDataServiceCallback cb = callbacks.getBroadcastItem(i);
+                    cb.valueChanged(msg.what, msg.obj.toString());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
-                default:
-                    break;
             }
+            callbacks.finishBroadcast();
+
             return false;
         }
     });

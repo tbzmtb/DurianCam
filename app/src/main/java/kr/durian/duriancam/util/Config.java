@@ -14,17 +14,35 @@ import java.util.Calendar;
  * Created by tbzm on 16. 4. 18.
  */
 public class Config {
-    public static final String SERVER_POST_URL = "http://52.197.115.227/manager/";
-    public static final String WEB_SOCKET_URL = "ws://52.197.115.227:7450";
-    public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
-    public static final String GET_SENSOR_DATA_PHP = "getSensorData_post_kr.php";
-    public static final String GET_TOTAL_PARKING_HISTORY_PHP = "manager_total_parking_history_post.php";
-    public static final String GET_SINGLE_PARKING_HISTORY_PHP = "manager_single_parking_history_post.php";
-    public static final String GET_MAP_FILE_PATH_PHP = "manager_get_map_file_path_post.php";
+    public static boolean GOOGLE_SERVICE_ENABLE_DEVICE = false;
 
+    public static final String SERVER_POST_URL = "http://52.193.65.182/manager/";
+    public static final String WEB_SOCKET_URL = "ws://52.193.65.182:7450";
+    public static final String STUN_SERVER = "52.193.65.182:3478";
+    public static final String TURN_SERVER = "52.193.65.182:3478:nsturnuser:tbzm8026";
+
+    //    public static final String SERVER_POST_URL = "http://52.197.191.48/manager/";
+//    public static final String WEB_SOCKET_URL = "ws://52.197.191.48:7450";
+//    public static final String STUN_SERVER = "52.197.191.48:3478";
+//    public static final String TURN_SERVER = "52.197.191.48:3478:nsturnuser:tbzm8026";
+
+//    public static final String SERVER_POST_URL = "http://192.168.0.19/manager/";
+//    public static final String WEB_SOCKET_URL = "ws://192.168.0.19:7450";
+//    public static final String STUN_SERVER = "192.168.0.19";
+//    public static final String TURN_SERVER = "192.168.0.19:3478:nsturnuser:Tbzm8026";
+
+//    public static final String STUN_SERVER = "turn.ouibot.com:7460";
+//    public static final String TURN_SERVER = "turn.ouibot.com:7460:nstrunuser:spttlwms";
+//    public static final String STUN_SERVER = "pc.ouibot.com:3478";
+//    public static final String TURN_SERVER = "pc.ouibot.com:3478:gorst:hero";
+
+
+    public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
 
     public static final String PARAM_RTCID = "rtcid";
     public static final String PARAM_TYPE = "type";
+    public static final String PARAM_SUB_TYPE = "subtype";
+    public static final String PARAM_ACCEPT = "accept";
     public static final String PARAM_UUID = "uuid";
     public static final String PARAM_SERIAL_NO = "serial_no";
     public static final String PARAM_EQUALS = "=";
@@ -43,15 +61,12 @@ public class Config {
     public static final String DEVICE_TYPE_ANDROID_VALUE = "2";
     public static final String SERVER_PARAM_LOGIN = "login";
 
-    public static final String SOCKET_MESSAGE_LOGIN_ACK = "login_ack";
 
     public static final int PARKING_DATA = 1000;
     public static final int PARKING_LOT_DATA_HANDLER = PARKING_DATA * 0x01;
     public static final int PARKING_SEVER_DATA_HANDLER = PARKING_DATA * 0x02;
     public static final int INSERT_USER_INFO_HANDLER = PARKING_DATA * 0x03;
-    public static final int PARKING_TOTAL_LOT_DATA_HANDLER = PARKING_DATA * 0x04;
-    public static final int PARKING_SINGLE_LOT_DATA_HANDLER = PARKING_DATA * 0x05;
-    public static final int PARKING_SINGLE_LOT_TIMER_HANDLER = PARKING_DATA * 0x06;
+
     private static int sScreenWidthDP = -1;
     private static int sScreenWidth = -1;
     private static int sScreenHeight = -1;
@@ -61,15 +76,47 @@ public class Config {
     public static final String PREF_LOGIN_NUMBER_KEY = "login_number_key";
     public static final String PREF_LOGIN_TOKEN_KEY = "login_token_key";
     public static final String PREF_RTCID_KEY = "rtcid_key";
+    public static final String PREF_PEER_RTCID_KEY = "peer_rtcid_key";
     public static final String PREF_EASY_LOGIN_KEY = "easy_login_key";
     public static final String PREF_MODE_KEY = "mode_key";
-
+    public static final String PREF_PEER_MODE_KEY = "peer_mode_key";
+    public static final String PREF_OFFER_SEND_DATA = "offer_send_data";
+    public static final String PREF_OFFER_SEND_ACK_DATA = "offer_send_ack_data";
     public static final int MODE_NONE = 0;
     public static final int MODE_CAMERA = 1;
     public static final int MODE_VIEWER = 2;
 
-    public static final int MODE_START = 10000;
+    public static final int HANDLER_MODE_START = 10000;
+    public static final int HANDLER_MODE_OFFER = 10001;
+    public static final int HANDLER_MODE_OFFER_ACK = 10002;
+    public static final int HANDLER_MODE_ANSWER = 10003;
+    public static final int HANDLER_MODE_CANDIDATE = 10004;
 
+
+//    public static final String STUN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460";
+//    public static final String TURN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460:nsturnuser:Tbzm8026";
+
+//    public static final String STUN_SERVER = "pc.ouibot.com:3478";
+//    public static final String TURN_SERVER = "pc.ouibot.com:3478:gorst:hero";
+
+    public static final String PARAM_SDP = "sdp";
+    public static final String PARAM_SESSION_ID = "sessionid";
+    public static final String PARAM_FROM = "from";
+    public static final String PARAM_OFFER = "offer";
+    public static final String PARAM_OFFER_ACK = "offer_ack";
+    public static final String PARAM_ANSWER_ACK = "answer_ack";
+    public static final String PARAM_TO = "to";
+    public static final String PARAM_MODE = "mode";
+    public static final String PARAM_LOGIN_ACK = "login_ack";
+    public static final String PARAM_CODE = "code";
+    public static final String PARAM_SUCCESS_CODE = "100";
+    public static final String PARAM_SUCCESS_DESCRIPTION = "success";
+    public static final String PARAM_PEER_IS_CALLING = "Peer is calling";
+    public static final String PARAM_PEER_IS_NOT_LOGIN = "Peer is not login.";
+    public static final String PARAM_PEER_IS_CALLING_CODE = "113";
+    public static final String PARAM_DESCRIPTION = "description";
+    public static final String PARAM_ANSWER = "answer";
+    public static final String PARAM_CANDIDATE = "candidate";
 
     public static int getScreenHeight(Context context) {
         if (sScreenHeight == -1) {
@@ -142,7 +189,7 @@ public class Config {
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(Long.parseLong(milliSecond));
         int year = c.get(Calendar.YEAR);
-        int month = c.get(Calendar.MONTH)+1;
+        int month = c.get(Calendar.MONTH) + 1;
         int day = c.get(Calendar.DAY_OF_MONTH);
         String s_year = String.valueOf(year);
         String s_month = String.valueOf(month);
@@ -150,7 +197,7 @@ public class Config {
         if (month < 10) {
             s_month = "0" + month;
         }
-        return s_year + "/" + s_month+"/"+s_day;
+        return s_year + "/" + s_month + "/" + s_day;
     }
 
 
@@ -170,16 +217,16 @@ public class Config {
         return s_hr + ":" + s_min;
     }
 
-    public static String getAppVersionName(Context context){
+    public static String getAppVersionName(Context context) {
         PackageInfo packageInfo = null;
         try {
             packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        if(packageInfo != null){
+        if (packageInfo != null) {
             return packageInfo.versionName;
-        }else{
+        } else {
             return "";
         }
     }

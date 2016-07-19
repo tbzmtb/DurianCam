@@ -124,7 +124,6 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
             throw new NullPointerException("streamSet may not be null");
         }
         log("setup called");
-
         boolean isInitiator = mState == State.STOPPED;
 
         mTransportAgent = new TransportAgent(isInitiator);
@@ -141,11 +140,12 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
 
         mStreamHandlers = new LinkedList<>();
         int index = 0;
+
         if (isInitiator) {
             // For outbound calls we initiate all streams without any remote description
             for (StreamSet.Stream stream : streamSet.getStreams()) {
                 Log.e("!!!", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                Log.e("!!!", "stream = "+stream);
+                Log.e("!!!", "stream = " + stream);
                 mStreamHandlers.add(createStreamHandler(index, null, stream));
                 index++;
             }
@@ -157,13 +157,12 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
                 index++;
             }
         }
-        for (StreamHandler handler : mStreamHandlers) {
 
+        for (StreamHandler handler : mStreamHandlers) {
             if (handler.getSession() != null) {
                 mTransportAgent.addSession(handler.getSession());
             }
         }
-
         if (mState == State.STOPPED) {
             mState = State.PENDING_A;
         } else {
@@ -177,7 +176,6 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
             mRemoteCandidateBuffer = null;
         }
         log("initial setup complete");
-
         mMainHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -189,6 +187,7 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
     }
 
     private synchronized void maybeFinishSetup() {
+        Log.d("!!!","maybeFinishSetup call");
         final SessionDescription sessionDescription;
 
         if (!mState.isPending()) {
@@ -197,6 +196,7 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
         }
         for (StreamHandler streamHandler : mStreamHandlers) {
             if (!streamHandler.isReady()) {
+                Log.d("!!!","maybeFinishSetup return");
                 return;
             }
         }
@@ -348,6 +348,7 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
         mTransportAgent = null;
         mStreamHandlers = null;
     }
+
     @Override
     public void stopSEND() {
         mState = State.STOPPED;
@@ -363,11 +364,12 @@ class RtcSessionImpl implements RtcSession, StreamHandler.RtcSessionDelegate {
         mTransportAgent = null;
         mStreamHandlers = null;
     }
+
     @Override
     public void checkConnect() {
         for (StreamHandler handler : mStreamHandlers) {
 
-            Log.e("!!!", "handler.getStream().getType().name() = "+handler.getStream().getType().name());
+            Log.e("!!!", "handler.getStream().getType().name() = " + handler.getStream().getType().name());
             Log.e("!!!", "handler.getSession() = " + handler.getSession().getIceConnectionState().name());
 
         }

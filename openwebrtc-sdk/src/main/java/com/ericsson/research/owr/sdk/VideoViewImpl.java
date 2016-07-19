@@ -185,10 +185,10 @@ public class VideoViewImpl implements VideoView, MediaSourceListener {
 
         @Override
         public synchronized void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-            Log.e("!!!", "mTag = ["+mTag+"], -----------------------------   onSurfaceTextureAvailable is start");
+            Log.e("!!!", "mTag = ["+mTag+"], -----------------------------   onSurfaceTextureAvailable is start"+surfaceTexture);
             Surface surface = new Surface(surfaceTexture);
             WindowRegistry.get().register(mTag, surface);
-            Log.e("!!!", "mTag = [" + mTag + "], -----------------------------   onSurfaceTextureAvailable is end");
+            Log.e("!!!", "mTag = [" + mTag + "], -----------------------------   onSurfaceTextureAvailable is end"+surfaceTexture);
 
             if ( context != null ) {
                 AudioManager audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
