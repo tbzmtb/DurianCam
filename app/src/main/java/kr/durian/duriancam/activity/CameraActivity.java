@@ -1,7 +1,5 @@
 package kr.durian.duriancam.activity;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +9,6 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.view.TextureView;
 import android.view.WindowManager;
@@ -33,8 +30,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Exchanger;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.service.DataService;
@@ -61,6 +56,9 @@ public class CameraActivity extends AppCompatActivity implements
     private JSONObject mReceiveOfferData;
     private final String SDPMID = "sdpMid";
     private final String VIDEO = "video";
+    private ArrayList<JSONObject> mCandidates = new ArrayList<>();
+    private boolean getAnswerAck = false;
+    private boolean getAnswer = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,16 +136,35 @@ public class CameraActivity extends AppCompatActivity implements
 
     }
 
-    protected void onDestroy() {
-        super.onDestroy();
-        disconnect();
+    @Override
+    public void finish() {
+        super.finish();
+        disconnectSession();
         closeWebSocket();
-        finish();
+        unregisterServiceCallback();
         unbindService(mConnection);
-//        android.os.Process.killProcess((android.os.Process.myPid()));
+        //        android.os.Process.killProcess((android.os.Process.myPid()));
+
     }
 
-//    public void registerRestartAlarm() {
+    private void registerServiceCallback() {
+        try {
+            mService.registerCallback(mCallbcak);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void unregisterServiceCallback() {
+        try {
+            boolean b = mService.unregisterCallback(mCallbcak);
+            Logger.d(TAG, "unregisterCallback1 call = ", b);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //    public void registerRestartAlarm() {
 //        Logger.d(TAG, "registerRestartAlarm call");
 //        Intent intent = new Intent(this, BootReceiver.class);
 //        intent.setAction("ACTION.RESTART.PersistentService");
@@ -174,27 +191,23 @@ public class CameraActivity extends AppCompatActivity implements
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (service != null) {
                 mService = IDataService.Stub.asInterface(service);
-                try {
-                    mService.registerCallback(mCallbcak);
-                    startConnect(DataPreference.getMode());
+                registerServiceCallback();
+                startConnect(DataPreference.getMode());
 
-
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
 
-            if (mService != null) {
-                try {
-                    mService.unregisterCallback(mCallbcak);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if (mService != null) {
+//                try {
+//                    boolean b = mService.unregisterCallback(mCallbcak);
+//                    Logger.d(TAG, "unregisterCallback1 call = ", b);
+//                } catch (RemoteException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
     };
 
@@ -371,6 +384,7 @@ public class CameraActivity extends AppCompatActivity implements
                     e.printStackTrace();
                 }
             } else if (value == Config.HANDLER_MODE_ANSWER) {
+                getAnswer = true;
                 mService.sendData(getAnswerAckData(data).toString());
                 try {
                     JSONObject result = new JSONObject(data);
@@ -385,7 +399,11 @@ public class CameraActivity extends AppCompatActivity implements
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
+            } else if (value == Config.HANDLER_MODE_ANSWER_ACK) {
+                getAnswerAck = true;
+                for (int i = 0; i < mCandidates.size(); i++) {
+                    mService.sendData(mCandidates.get(i).toString());
+                }
             } else if (value == Config.HANDLER_MODE_CANDIDATE) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -433,7 +451,19 @@ public class CameraActivity extends AppCompatActivity implements
             json.getJSONObject(Config.PARAM_CANDIDATE).put(SDPMID, VIDEO);
             JSONObject result = getCandidateData(json);
             if (result != null) {
-                mService.sendData(result.toString());
+                if (!isOfferUser()) {
+                    if (!getAnswerAck) {
+                        mCandidates.add(result);
+                    } else {
+                        mService.sendData(result.toString());
+                    }
+                } else {
+                    if (!getAnswer) {
+                        mCandidates.add(result);
+                    } else {
+                        mService.sendData(result.toString());
+                    }
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -442,8 +472,8 @@ public class CameraActivity extends AppCompatActivity implements
         }
     }
 
-    public void disconnect() {
-        Logger.d(TAG, "disconnect call ");
+    public void disconnectSession() {
+        Logger.d(TAG, "disconnectSession call ");
         mStreamSet = null;
         if (mRtcSession != null) {
             mRtcSession.stop();

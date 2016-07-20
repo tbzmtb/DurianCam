@@ -42,6 +42,7 @@ public class DataService extends Service {
         public void connectWebSocket() throws RemoteException {
             connectWebSocketInService();
         }
+
         @Override
         public void closeWebSocket() throws RemoteException {
             closeWebsocketInService();
@@ -56,9 +57,9 @@ public class DataService extends Service {
         public boolean unregisterCallback(IDataServiceCallback callback)
                 throws RemoteException {
             boolean flag = false;
-
+            Logger.d(TAG, "unregisterCallback2 call callback = " + callback);
             if (callback != null) {
-                flag = unregisterCallback(callback);
+                flag = callbacks.unregister(callback);
             }
 
             return flag;
@@ -161,6 +162,13 @@ public class DataService extends Service {
                             handler.sendMessage(msg);
                             break;
                         }
+                        case Config.PARAM_ANSWER_ACK: {
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_ANSWER_ACK;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
                         case Config.PARAM_CANDIDATE: {
                             Message msg = Message.obtain();
                             msg.what = Config.HANDLER_MODE_CANDIDATE;
@@ -232,7 +240,7 @@ public class DataService extends Service {
     }
 
     private void closeWebsocketInService() {
-        Logger.d(TAG, "closeWebsocketInService call mWebSocketClient = "+mWebSocketClient);
+        Logger.d(TAG, "closeWebsocketInService call mWebSocketClient = " + mWebSocketClient);
         if (mWebSocketClient != null) {
             mWebSocketClient.close();
             mWebSocketClient = null;

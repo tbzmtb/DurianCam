@@ -16,25 +16,10 @@ import java.util.Calendar;
 public class Config {
     public static boolean GOOGLE_SERVICE_ENABLE_DEVICE = false;
 
-    public static final String SERVER_POST_URL = "http://52.193.65.182/manager/";
-    public static final String WEB_SOCKET_URL = "ws://52.193.65.182:7450";
-    public static final String STUN_SERVER = "52.193.65.182:3478";
-    public static final String TURN_SERVER = "52.193.65.182:3478:nsturnuser:tbzm8026";
-
-    //    public static final String SERVER_POST_URL = "http://52.197.191.48/manager/";
-//    public static final String WEB_SOCKET_URL = "ws://52.197.191.48:7450";
-//    public static final String STUN_SERVER = "52.197.191.48:3478";
-//    public static final String TURN_SERVER = "52.197.191.48:3478:nsturnuser:tbzm8026";
-
-//    public static final String SERVER_POST_URL = "http://192.168.0.19/manager/";
-//    public static final String WEB_SOCKET_URL = "ws://192.168.0.19:7450";
-//    public static final String STUN_SERVER = "192.168.0.19";
-//    public static final String TURN_SERVER = "192.168.0.19:3478:nsturnuser:Tbzm8026";
-
-//    public static final String STUN_SERVER = "turn.ouibot.com:7460";
-//    public static final String TURN_SERVER = "turn.ouibot.com:7460:nstrunuser:spttlwms";
-//    public static final String STUN_SERVER = "pc.ouibot.com:3478";
-//    public static final String TURN_SERVER = "pc.ouibot.com:3478:gorst:hero";
+    public static final String SERVER_POST_URL = "";
+    public static final String WEB_SOCKET_URL = "";
+    public static final String STUN_SERVER = "";
+    public static final String TURN_SERVER = "";
 
 
     public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
@@ -91,6 +76,7 @@ public class Config {
     public static final int HANDLER_MODE_OFFER_ACK = 10002;
     public static final int HANDLER_MODE_ANSWER = 10003;
     public static final int HANDLER_MODE_CANDIDATE = 10004;
+    public static final int HANDLER_MODE_ANSWER_ACK = 10005;
 
 
 //    public static final String STUN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460";

@@ -49,5 +49,4 @@ dependencies {
     compile 'com.mcxiaoke.volley:library:1.+'
     compile 'com.android.support:support-v4:22.0.0'
     compile 'com.google.android.gms:play-services-auth:8.4.0'
-//    compile 'com.google.android.gms:play-services-auth:9.2.0'
 }

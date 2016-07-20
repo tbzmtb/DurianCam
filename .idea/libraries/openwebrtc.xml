@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="openwebrtc">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/openwebrtc-sdk/libs/openwebrtc.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

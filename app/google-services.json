@@ -13,21 +13,21 @@
       },
       "oauth_client": [
         {
-          "client_id": "175455013954-vcegb3v10hffre5eppsejecbi66bm2j8.apps.googleusercontent.com",
+          "client_id": "175455013954-vlgoctvtebte1l1rbk158d8bgud5kl1v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "kr.durian.duriancam",
-            "certificate_hash": "201BA6D97619C64BA15405C17095E35723D954B7"
+            "certificate_hash": "175F0DA2AA4188AC5D5089F8AD5D44746A2563AA"
           }
         },
         {
-          "client_id": "175455013954-4vsrc77gd8frp0dsldov003cmi3rsgvn.apps.googleusercontent.com",
+          "client_id": "175455013954-b689lntjl9mmqmmln0qegdu7q7cetqja.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBSgYp6NFvPlXvJuEF4xgJUd8xfaiqn7OM"
+          "current_key": "AIzaSyDdAxq-9YemIpVEK9pUbajOJBd-7HNvURQ"
         }
       ],
       "services": {
