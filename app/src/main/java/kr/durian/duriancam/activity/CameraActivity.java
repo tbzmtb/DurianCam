@@ -1,13 +1,17 @@
 package kr.durian.duriancam.activity;
 
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.view.TextureView;
@@ -59,6 +63,8 @@ public class CameraActivity extends AppCompatActivity implements
     private ArrayList<JSONObject> mCandidates = new ArrayList<>();
     private boolean getAnswerAck = false;
     private boolean getAnswer = false;
+    private CheckPeerCameraHandler mHandler;
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +74,7 @@ public class CameraActivity extends AppCompatActivity implements
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_camera);
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        mHandler = new CheckPeerCameraHandler();
         setWindowFrags();
 //        setMute();
         bindService(new Intent(this,
@@ -120,13 +127,82 @@ public class CameraActivity extends AppCompatActivity implements
 
     }
 
+    private void showProgress() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mProgressDialog == null) {
+                    mProgressDialog = new ProgressDialog(CameraActivity.this);
+                    mProgressDialog.setCanceledOnTouchOutside(false);
+                    if(DataPreference.getMode() != Config.MODE_VIEWER) {
+                        mProgressDialog.setMessage(getString(R.string.wait_for_view));
+                    }else{
+                        mProgressDialog.setMessage(getString(R.string.wait_for_connection));
+                    }
+                    mProgressDialog.setOnDismissListener(mProgressDismissListener);
+                    mProgressDialog.show();
+                }
+            }
+        });
+    }
+
+    DialogInterface.OnDismissListener mProgressDismissListener = new DialogInterface.OnDismissListener(){
+        @Override
+        public void onDismiss(DialogInterface dialogInterface) {
+            finish();
+        }
+    };
+
+    private void cancelProgress() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mProgressDialog != null) {
+                    mProgressDialog.setOnDismissListener(null);
+                    mProgressDialog.cancel();
+                    mProgressDialog = null;
+                }
+            }
+        });
+
+    }
 
     @Override
     protected void onPause() {
         super.onPause();
         Logger.d(TAG, "CameraActivity onPause Call");
 
+    }
 
+
+    public void unCallHandler() {
+        if (mHandler != null) {
+            mHandler.removeCallbacks(mRunnable);
+        }
+    }
+
+    private Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mHandler.sendEmptyMessage(0);
+        }
+    };
+
+    public void callHandler() {
+        if (mHandler != null) {
+            mHandler.postDelayed(mRunnable, 3000);
+
+        }
+    }
+
+    private class CheckPeerCameraHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            checkPeerCameraExist();
+            callHandler();
+
+        }
     }
 
     @Override
@@ -139,10 +215,12 @@ public class CameraActivity extends AppCompatActivity implements
     @Override
     public void finish() {
         super.finish();
+        cancelProgress();
         disconnectSession();
         closeWebSocket();
         unregisterServiceCallback();
         unbindService(mConnection);
+        unCallHandler();
         //        android.os.Process.killProcess((android.os.Process.myPid()));
 
     }
@@ -164,17 +242,6 @@ public class CameraActivity extends AppCompatActivity implements
         }
     }
 
-    //    public void registerRestartAlarm() {
-//        Logger.d(TAG, "registerRestartAlarm call");
-//        Intent intent = new Intent(this, BootReceiver.class);
-//        intent.setAction("ACTION.RESTART.PersistentService");
-//        PendingIntent sender = PendingIntent.getBroadcast(this, 0, intent, 0);
-//        long firstTime = SystemClock.elapsedRealtime();
-//        firstTime += 500;
-//        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-//        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, sender);
-//    }
-
     private void closeWebSocket() {
         try {
             if (mService != null) {
@@ -185,29 +252,57 @@ public class CameraActivity extends AppCompatActivity implements
         }
     }
 
+    private void checkPeerCameraExist() {
+        try {
+            if (mService != null) {
+                JSONObject json = getCheckPeerCameraExist();
+                if (json == null) {
+                    Logger.d(TAG, "json = " + json);
+                    return;
+                }
+                mService.sendData(json.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPeerCameraExist(JSONObject json) {
+        try {
+            if (mService != null) {
+                JSONObject data = new JSONObject();
+                data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+                data.put(Config.PARAM_FROM, json.getString(Config.PARAM_TO));
+                data.put(Config.PARAM_TO, json.getString(Config.PARAM_FROM));
+                data.put(Config.PARAM_SESSION_ID, json.getString(Config.PARAM_SESSION_ID));
+                data.put(Config.PARAM_DESCRIPTION, json.getString(Config.PARAM_DESCRIPTION));
+                mService.sendData(data.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (service != null) {
                 mService = IDataService.Stub.asInterface(service);
+                showProgress();
                 registerServiceCallback();
-                startConnect(DataPreference.getMode());
-
+                if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                    unCallHandler();
+                    callHandler();
+                }
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
-//            if (mService != null) {
-//                try {
-//                    boolean b = mService.unregisterCallback(mCallbcak);
-//                    Logger.d(TAG, "unregisterCallback1 call = ", b);
-//                } catch (RemoteException e) {
-//                    e.printStackTrace();
-//                }
-//            }
+            mService = null;
         }
     };
 
@@ -278,6 +373,22 @@ public class CameraActivity extends AppCompatActivity implements
         } else {
             return false;
         }
+    }
+
+    private JSONObject getCheckPeerCameraExist() {
+        Logger.d(TAG, "getCheckPeerCameraExist call");
+        try {
+            JSONObject json = new JSONObject();
+            json.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+            json.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
+            json.put(Config.PARAM_FROM, DataPreference.getPeerRtcid());
+            json.put(Config.PARAM_TO, DataPreference.getRtcid());
+            json.put(Config.PARAM_DESCRIPTION, Config.PARAM_CHECK_CAMERA_PEER_EXIST);
+            return json;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private JSONObject getOfferAckData() {
@@ -414,6 +525,25 @@ public class CameraActivity extends AppCompatActivity implements
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            } else if (value == Config.HANDLER_MODE_CONFIG_ACK) {
+                try {
+                    JSONObject json = new JSONObject(data);
+                    String description = json.getString(Config.PARAM_DESCRIPTION);
+                    if (description.equals(Config.PARAM_CHECK_CAMERA_PEER_EXIST)) {
+                        if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                            unCallHandler();
+                            cancelProgress();
+                            startConnect(DataPreference.getMode());
+                        } else {
+                            cancelProgress();
+                            startConnect(DataPreference.getMode());
+                            sendPeerCameraExist(json);
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -479,7 +609,7 @@ public class CameraActivity extends AppCompatActivity implements
             mRtcSession.stop();
             mRtcSession = null;
         }
-        if (DataPreference.getMode() == Config.MODE_CAMERA) {
+        if (DataPreference.getMode() == Config.MODE_BABY_TALK) {
             mReceiveOfferData = null;
         }
     }

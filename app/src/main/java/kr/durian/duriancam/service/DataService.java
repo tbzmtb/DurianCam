@@ -176,6 +176,12 @@ public class DataService extends Service {
                             handler.sendMessage(msg);
                             break;
                         }
+                        case Config.PARAM_GET_CONFIG_ACK:{
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_CONFIG_ACK;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                        }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

@@ -1,5 +1,6 @@
 package kr.durian.duriancam.activity;
 
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,8 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
@@ -34,6 +37,7 @@ import com.google.android.gms.common.api.Status;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.javascript.tools.debugger.Main;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.asynctask.InsertUserInfoTask;
@@ -51,6 +55,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private GoogleApiClient mGoogleApiClient;
     private final int RC_SIGN_IN = 0;
     private DataHandler mHandler;
+    private ImageButton mBabyButton;
+    private ImageButton mCctvButton;
+    private Button mViewerButton;
+    private Button mStartButton;
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +70,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mHandler = new DataHandler();
         DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        findViewById(R.id.sign_in_button).setOnClickListener(this);
-        findViewById(R.id.btn_viewer).setOnClickListener(this);
-        findViewById(R.id.btn_camera).setOnClickListener(this);
+        mStartButton = (Button) findViewById(R.id.sign_in_button);
+        mStartButton.setOnClickListener(this);
+        mBabyButton = (ImageButton) findViewById(R.id.btn_baby_talk);
+        mBabyButton.setOnClickListener(this);
+
+        mCctvButton = (ImageButton) findViewById(R.id.btn_cctv);
+        mCctvButton.setOnClickListener(this);
+
+        mViewerButton = (Button) findViewById(R.id.btn_viewer);
+        mViewerButton.setOnClickListener(this);
+
+
         if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestEmail()
@@ -147,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mService = IDataService.Stub.asInterface(service);
                 try {
                     mService.registerCallback(mCallbcak);
+                    setDefaultMode();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -176,11 +195,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void showProgress() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mProgressDialog == null) {
+                    mProgressDialog = new ProgressDialog(MainActivity.this);
+                    mProgressDialog.setCanceledOnTouchOutside(false);
+                    mProgressDialog.setMessage(getString(R.string.please_wait));
+                    mProgressDialog.show();
+                }
+            }
+        });
+    }
+
     private void signIn() {
         if (DataPreference.getMode() == Config.MODE_NONE) {
             Toast.makeText(this, getString(R.string.please_choose_mode), Toast.LENGTH_SHORT).show();
             return;
         }
+        showProgress();
         if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
             if (!DataPreference.getEasyLogin()) {
                 if (mGoogleApiClient.isConnected()) {
@@ -252,9 +286,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void cancelProgress() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mProgressDialog != null) {
+                    mProgressDialog.setOnDismissListener(null);
+                    mProgressDialog.cancel();
+                    mProgressDialog = null;
+                }
+            }
+        });
+
+    }
+
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         Log.d(TAG, "handleSignInResult:" + result.toString());
+        cancelProgress();
         if (result.isSuccess()) {
             GoogleSignInAccount acct = result.getSignInAccount();
             if (acct == null) {
@@ -288,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             DataPreference.setLoginEmail(emailString);
             DataPreference.setLoginNumber(userId);
             DataPreference.setLoginToken(token);
-            if (DataPreference.getMode() == Config.MODE_CAMERA) {
+            if (DataPreference.getMode() != Config.MODE_VIEWER) {
                 DataPreference.setRtcid(userId);
                 DataPreference.setPeerRtcid(emailString.split("@")[0]);
 
@@ -313,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cert_master, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         } else {
-            Logger.d(TAG, "google login fail");
+            Toast.makeText(MainActivity.this, getString(R.string.fail_login), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -336,13 +385,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (value == Config.HANDLER_MODE_START) {
                 try {
                     JSONObject json = new JSONObject(data);
-                    if(!json.isNull(Config.PARAM_DESCRIPTION)){
+                    if (!json.isNull(Config.PARAM_DESCRIPTION)) {
                         String desciption = json.getString(Config.PARAM_DESCRIPTION);
                         if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
                             Intent intent = new Intent(MainActivity.this, CameraActivity.class);
                             startActivity(intent);
                         }
-                    }else{
+                    } else {
                         Intent intent = new Intent(MainActivity.this, CameraActivity.class);
                         startActivity(intent);
                     }
@@ -357,6 +406,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    private void setDefaultMode(){
+        AllButtonUnselected();
+        if(DataPreference.getMode() == Config.MODE_BABY_TALK){
+            mBabyButton.setSelected(true);
+        }else if(DataPreference.getMode() == Config.MODE_CCTV){
+            mCctvButton.setSelected(true);
+        }else if(DataPreference.getMode() == Config.MODE_VIEWER){
+            mViewerButton.setSelected(true);
+        }else{
+
+        }
+    }
+
+    private void AllButtonUnselected() {
+        mBabyButton.setSelected(false);
+        mViewerButton.setSelected(false);
+        mCctvButton.setSelected(false);
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -364,11 +432,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 signIn();
                 break;
             case R.id.btn_viewer:
+                AllButtonUnselected();
+                v.setSelected(true);
                 DataPreference.setMode(Config.MODE_VIEWER);
-                DataPreference.setPeerMode(Config.MODE_CAMERA);
                 break;
-            case R.id.btn_camera:
-                DataPreference.setMode(Config.MODE_CAMERA);
+            case R.id.btn_baby_talk:
+                AllButtonUnselected();
+                v.setSelected(true);
+                DataPreference.setMode(Config.MODE_BABY_TALK);
+                DataPreference.setPeerMode(Config.MODE_VIEWER);
+                break;
+            case R.id.btn_cctv:
+                AllButtonUnselected();
+                v.setSelected(true);
+                DataPreference.setMode(Config.MODE_CCTV);
                 DataPreference.setPeerMode(Config.MODE_VIEWER);
                 break;
         }

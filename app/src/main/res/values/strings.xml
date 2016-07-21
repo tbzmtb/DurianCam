@@ -4,4 +4,10 @@
     <string name="easy_login">Quick Sign in</string>
     <string name="please_choose_mode">Please choose mode</string>
     <string name="server_client_id">175455013954-b689lntjl9mmqmmln0qegdu7q7cetqja.apps.googleusercontent.com</string>
+    <string name="selete_viewer_mode">Viewer Mode</string>
+    <string name="btn_start">Start</string>
+    <string name="please_wait">Please wait for a while</string>
+    <string name="fail_login">Login fail. Please retry.</string>
+    <string name="wait_for_view">Wait for Viewer</string>
+    <string name="wait_for_connection">Wait for a connection</string>
 </resources>

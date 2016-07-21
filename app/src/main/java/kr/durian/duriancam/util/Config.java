@@ -14,12 +14,13 @@ import java.util.Calendar;
  * Created by tbzm on 16. 4. 18.
  */
 public class Config {
-    public static boolean GOOGLE_SERVICE_ENABLE_DEVICE = false;
+    public static boolean GOOGLE_SERVICE_ENABLE_DEVICE = true;
 
     public static final String SERVER_POST_URL = "";
     public static final String WEB_SOCKET_URL = "";
     public static final String STUN_SERVER = "";
     public static final String TURN_SERVER = "";
+
 
 
     public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
@@ -68,8 +69,9 @@ public class Config {
     public static final String PREF_OFFER_SEND_DATA = "offer_send_data";
     public static final String PREF_OFFER_SEND_ACK_DATA = "offer_send_ack_data";
     public static final int MODE_NONE = 0;
-    public static final int MODE_CAMERA = 1;
+    public static final int MODE_BABY_TALK = 1;
     public static final int MODE_VIEWER = 2;
+    public static final int MODE_CCTV = 3;
 
     public static final int HANDLER_MODE_START = 10000;
     public static final int HANDLER_MODE_OFFER = 10001;
@@ -77,6 +79,7 @@ public class Config {
     public static final int HANDLER_MODE_ANSWER = 10003;
     public static final int HANDLER_MODE_CANDIDATE = 10004;
     public static final int HANDLER_MODE_ANSWER_ACK = 10005;
+    public static final int HANDLER_MODE_CONFIG_ACK = 10006;
 
 
 //    public static final String STUN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460";
@@ -97,12 +100,14 @@ public class Config {
     public static final String PARAM_CODE = "code";
     public static final String PARAM_SUCCESS_CODE = "100";
     public static final String PARAM_SUCCESS_DESCRIPTION = "success";
+    public static final String PARAM_CHECK_CAMERA_PEER_EXIST = "check_camera_peer_exist";
     public static final String PARAM_PEER_IS_CALLING = "Peer is calling";
     public static final String PARAM_PEER_IS_NOT_LOGIN = "Peer is not login.";
     public static final String PARAM_PEER_IS_CALLING_CODE = "113";
     public static final String PARAM_DESCRIPTION = "description";
     public static final String PARAM_ANSWER = "answer";
     public static final String PARAM_CANDIDATE = "candidate";
+    public static final String PARAM_GET_CONFIG_ACK = "getconfig_ack";
 
     public static int getScreenHeight(Context context) {
         if (sScreenHeight == -1) {
