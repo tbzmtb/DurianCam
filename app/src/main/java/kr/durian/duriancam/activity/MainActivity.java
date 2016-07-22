@@ -96,6 +96,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bindService(new Intent(this,
                 DataService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
+    private long backKeyPressedTime;
+    private Toast toast;
+
+    public void onBackPressed() {
+        if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
+            backKeyPressedTime = System.currentTimeMillis();
+            toast = Toast.makeText(MainActivity.this, getResources().getString(R.string.backbutton_click_is_finish), Toast.LENGTH_SHORT);
+            toast.show();
+            return;
+        }
+        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
+            finish();
+            toast.cancel();
+        }
+    }
 
     public class DataHandler extends Handler {
 
@@ -303,7 +318,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         Log.d(TAG, "handleSignInResult:" + result.toString());
-        cancelProgress();
         if (result.isSuccess()) {
             GoogleSignInAccount acct = result.getSignInAccount();
             if (acct == null) {
@@ -357,11 +371,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String name = displayName;
             String disable = "0";
 
+            cancelProgress();
 
             new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, master_rtcid,
                     cert_master, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         } else {
+            cancelProgress();
             Toast.makeText(MainActivity.this, getString(R.string.fail_login), Toast.LENGTH_SHORT).show();
         }
     }

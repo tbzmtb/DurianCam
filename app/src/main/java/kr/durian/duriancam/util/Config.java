@@ -23,6 +23,8 @@ public class Config {
 
 
 
+
+
     public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
 
     public static final String PARAM_RTCID = "rtcid";
@@ -40,7 +42,7 @@ public class Config {
     public static final String PARAM_CERT_EMAIL = "cert_email";
     public static final String PARAM_NAME = "name";
     public static final String PARAM_DISABLE = "disable";
-
+    public static final String PARAM_CHECK = "check";
 
     public static final String SERVER_PARAM_VERSION = "version";
     public static final String SERVER_PARAM_DEVICE_TYPE = "devicetype";
@@ -64,6 +66,7 @@ public class Config {
     public static final String PREF_RTCID_KEY = "rtcid_key";
     public static final String PREF_PEER_RTCID_KEY = "peer_rtcid_key";
     public static final String PREF_EASY_LOGIN_KEY = "easy_login_key";
+    public static final String PREF_SCREEN_ON_OFF_KEY = "keep_screen_on_off";
     public static final String PREF_MODE_KEY = "mode_key";
     public static final String PREF_PEER_MODE_KEY = "peer_mode_key";
     public static final String PREF_OFFER_SEND_DATA = "offer_send_data";
@@ -73,6 +76,9 @@ public class Config {
     public static final int MODE_VIEWER = 2;
     public static final int MODE_CCTV = 3;
 
+    public static final int SCREEN_OFF = 0;
+    public static final int SCREEN_ON = 1;
+
     public static final int HANDLER_MODE_START = 10000;
     public static final int HANDLER_MODE_OFFER = 10001;
     public static final int HANDLER_MODE_OFFER_ACK = 10002;
@@ -80,7 +86,8 @@ public class Config {
     public static final int HANDLER_MODE_CANDIDATE = 10004;
     public static final int HANDLER_MODE_ANSWER_ACK = 10005;
     public static final int HANDLER_MODE_CONFIG_ACK = 10006;
-
+    public static final int HANDLER_MODE_HANGUP = 10007;
+    public static final int HANDLER_MODE_HANGUP_ACK = 10008;
 
 //    public static final String STUN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460";
 //    public static final String TURN_SERVER = "ec2-52-197-115-227.ap-northeast-1.compute.amazonaws.com:7460:nsturnuser:Tbzm8026";
@@ -93,6 +100,8 @@ public class Config {
     public static final String PARAM_FROM = "from";
     public static final String PARAM_OFFER = "offer";
     public static final String PARAM_OFFER_ACK = "offer_ack";
+    public static final String PARAM_HANGUP = "hangup";
+    public static final String PARAM_HANGUP_ACK = "hangup_ack";
     public static final String PARAM_ANSWER_ACK = "answer_ack";
     public static final String PARAM_TO = "to";
     public static final String PARAM_MODE = "mode";

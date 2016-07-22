@@ -181,6 +181,21 @@ public class DataService extends Service {
                             msg.what = Config.HANDLER_MODE_CONFIG_ACK;
                             msg.obj = message;
                             handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_HANGUP:{
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_HANGUP;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
+                        case Config.PARAM_HANGUP_ACK:{
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_HANGUP_ACK;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
                         }
                     }
                 } catch (JSONException e) {

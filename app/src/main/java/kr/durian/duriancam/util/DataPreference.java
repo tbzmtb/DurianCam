@@ -117,6 +117,16 @@ public class DataPreference {
         }
     }
 
+    public static void setScreenOnOff(boolean value){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putBoolean(Config.PREF_SCREEN_ON_OFF_KEY, value);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
     public static String getLoginName() {
         return PREF != null ? PREF.getString(Config.PREF_LOGIN_NAME_KEY, null) : null;
     }
@@ -142,6 +152,10 @@ public class DataPreference {
 
     public static boolean getEasyLogin() {
         return PREF != null ? PREF.getBoolean(Config.PREF_EASY_LOGIN_KEY, true) : true;
+    }
+
+    public static boolean getKeepSceenOn(){
+        return PREF != null ? PREF.getBoolean(Config.PREF_SCREEN_ON_OFF_KEY, true) : true;
     }
 
     public static int getMode() {

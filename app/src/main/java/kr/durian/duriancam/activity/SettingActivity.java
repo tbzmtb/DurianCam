@@ -19,7 +19,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
 
     private final String TAG = getClass().getName();
     private ImageButton mBtnBack;
-    private Switch mSwitch;
+    private Switch mLoginSwitch;
+    private Switch mScreenOnOffSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +30,10 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
         mBtnBack = (ImageButton) findViewById(R.id.btn_back);
         mBtnBack.setOnClickListener(this);
-        mSwitch = (Switch) findViewById(R.id.push_switch);
-        mSwitch.setOnCheckedChangeListener(onCheckChange);
+        mLoginSwitch = (Switch) findViewById(R.id.push_switch);
+        mLoginSwitch.setOnCheckedChangeListener(onCheckChange);
+        mScreenOnOffSwitch = (Switch)findViewById(R.id.screen_on_off_switch);
+        mScreenOnOffSwitch.setOnCheckedChangeListener(onScreenSwitchCheckChange);
     }
 
     CompoundButton.OnCheckedChangeListener onCheckChange = new CompoundButton.OnCheckedChangeListener() {
@@ -41,13 +44,28 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         }
     };
 
+    CompoundButton.OnCheckedChangeListener onScreenSwitchCheckChange = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            DataPreference.setScreenOnOff(isChecked);
+
+        }
+    };
+
+
     @Override
     protected void onResume() {
         super.onResume();
         boolean check = DataPreference.getEasyLogin();
-        if (mSwitch != null) {
-            mSwitch.setChecked(check);
+        if (mLoginSwitch != null) {
+            mLoginSwitch.setChecked(check);
         }
+
+        boolean screenValue = DataPreference.getKeepSceenOn();
+        if(mScreenOnOffSwitch != null){
+            mScreenOnOffSwitch.setChecked(screenValue);
+        }
+
     }
 
     @Override

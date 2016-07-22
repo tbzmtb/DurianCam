@@ -3,6 +3,7 @@
     <string name="app_name">두리안캠</string>
     <string name="action_settings">설정</string>
     <string name="easy_login">간편 로그인</string>
+    <string name="keep_screen_on_off">카메라 화면 꺼짐 방지</string>
     <string name="please_choose_mode">모드를 선택해 주세요</string>
     <string name="selete_viewer_mode">뷰어로 선택하기</string>
     <string name="btn_start">시작</string>
@@ -10,6 +11,8 @@
     <string name="fail_login">로그인에 실패 하였습니다. 다시 시도해주세요</string>
     <string name="wait_for_view">뷰어를 기다리는 중입니다.</string>
     <string name="wait_for_connection">연결을 기다리는 중입니다.</string>
+    <string name="backbutton_click_is_finish"><![CDATA["'"]]>뒤로<![CDATA["'"]]>버튼을 한번 더 누르시면 종료됩니다.</string>
+
     <!--<string-array name="day_of_week">-->
         <!--<item>일요일</item>-->
         <!--<item>월요일</item>-->

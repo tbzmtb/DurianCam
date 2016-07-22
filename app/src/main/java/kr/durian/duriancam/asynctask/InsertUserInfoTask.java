@@ -1,5 +1,6 @@
 package kr.durian.duriancam.asynctask;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -11,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import kr.durian.duriancam.R;
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.Logger;
 
@@ -33,7 +35,7 @@ public class InsertUserInfoTask extends AsyncTask<String, Void, String> {
     private String cert_email;
     private String name;
     private String disable;
-
+    private ProgressDialog mProgressDialog;
 
     public InsertUserInfoTask(Context context, Handler handler, String rtcid,
                               String type, String uuid, String serial_no, String password,
@@ -54,6 +56,36 @@ public class InsertUserInfoTask extends AsyncTask<String, Void, String> {
         this.disable = disable;
 
 
+    }
+
+    private void showProgress() {
+        try {
+            if (mProgressDialog == null) {
+                mProgressDialog = new ProgressDialog(context);
+                mProgressDialog.setCanceledOnTouchOutside(false);
+                mProgressDialog.setMessage(context.getString(R.string.please_wait));
+                mProgressDialog.show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cancelProgress() {
+        try {
+            if (mProgressDialog != null) {
+                mProgressDialog.cancel();
+                mProgressDialog = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        showProgress();
     }
 
     @Override
@@ -110,6 +142,7 @@ public class InsertUserInfoTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String result) {
         super.onPostExecute(result);
+        cancelProgress();
         Logger.d(TAG, "result = " + result);
         if (handler != null) {
             Message msg = Message.obtain();
