@@ -13,6 +13,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "175455013954-5pk8k7sl6625dm8tvlit8ikkrnk828nn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kr.durian.duriancam",
+            "certificate_hash": "FE2020CEFE6A224D080394E63DA2F1342668AD10"
+          }
+        },
+        {
           "client_id": "175455013954-vlgoctvtebte1l1rbk158d8bgud5kl1v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

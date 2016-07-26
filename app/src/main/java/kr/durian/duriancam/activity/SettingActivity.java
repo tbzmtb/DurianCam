@@ -1,6 +1,10 @@
 package kr.durian.duriancam.activity;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -8,6 +12,7 @@ import android.view.Window;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.util.DataPreference;
@@ -21,7 +26,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     private ImageButton mBtnBack;
     private Switch mLoginSwitch;
     private Switch mScreenOnOffSwitch;
-
+    private TextView mVersionText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +39,20 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         mLoginSwitch.setOnCheckedChangeListener(onCheckChange);
         mScreenOnOffSwitch = (Switch)findViewById(R.id.screen_on_off_switch);
         mScreenOnOffSwitch.setOnCheckedChangeListener(onScreenSwitchCheckChange);
+        mVersionText = (TextView)findViewById(R.id.app_version);
+        mVersionText.setText(getVersionName());
+    }
+
+    public String getVersionName()
+    {
+        try {
+            PackageInfo pi= getPackageManager().getPackageInfo(getPackageName(), 0);
+            return pi.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 
     CompoundButton.OnCheckedChangeListener onCheckChange = new CompoundButton.OnCheckedChangeListener() {

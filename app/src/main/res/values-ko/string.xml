@@ -6,20 +6,15 @@
     <string name="keep_screen_on_off">카메라 화면 꺼짐 방지</string>
     <string name="please_choose_mode">모드를 선택해 주세요</string>
     <string name="selete_viewer_mode">뷰어로 선택하기</string>
+    <string name="selete_camera_mode">카메라로 선택하기</string>
     <string name="btn_start">시작</string>
     <string name="please_wait">잠시만 기다려 주세요</string>
     <string name="fail_login">로그인에 실패 하였습니다. 다시 시도해주세요</string>
     <string name="wait_for_view">뷰어를 기다리는 중입니다.</string>
     <string name="wait_for_connection">연결을 기다리는 중입니다.</string>
     <string name="backbutton_click_is_finish"><![CDATA["'"]]>뒤로<![CDATA["'"]]>버튼을 한번 더 누르시면 종료됩니다.</string>
-
-    <!--<string-array name="day_of_week">-->
-        <!--<item>일요일</item>-->
-        <!--<item>월요일</item>-->
-        <!--<item>화요일</item>-->
-        <!--<item>수요일</item>-->
-        <!--<item>목요일</item>-->
-        <!--<item>금요일</item>-->
-        <!--<item>토요일</item>-->
-    <!--</string-array>-->
+    <string name="app_version">앱 버전</string>
+    <string name="web_client_id">175455013954-b689lntjl9mmqmmln0qegdu7q7cetqja.apps.googleusercontent.com</string>
+    <string name="banner_ad_unit_id">ca-app-pub-2529356179267288/7695106253</string>
+    <string name="save_image_into_gallery">갤러리에 저장 되었습니다.</string>
 </resources>

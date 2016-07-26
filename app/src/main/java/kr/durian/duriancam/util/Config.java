@@ -68,13 +68,14 @@ public class Config {
     public static final String PREF_EASY_LOGIN_KEY = "easy_login_key";
     public static final String PREF_SCREEN_ON_OFF_KEY = "keep_screen_on_off";
     public static final String PREF_MODE_KEY = "mode_key";
-    public static final String PREF_PEER_MODE_KEY = "peer_mode_key";
+    public static final String PREF_VIEWER_WILL_CONNECT_MODE_KEY = "viewer_will_connect_mode_key";
     public static final String PREF_OFFER_SEND_DATA = "offer_send_data";
     public static final String PREF_OFFER_SEND_ACK_DATA = "offer_send_ack_data";
-    public static final int MODE_NONE = 0;
     public static final int MODE_BABY_TALK = 1;
-    public static final int MODE_VIEWER = 2;
     public static final int MODE_CCTV = 3;
+    public static final int MODE_SECURE = 5;
+    public static final int MODE_VIEWER = 2;
+    public static final int MODE_CAMERA = 4;
 
     public static final int SCREEN_OFF = 0;
     public static final int SCREEN_ON = 1;

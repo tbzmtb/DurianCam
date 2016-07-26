@@ -37,7 +37,6 @@ import com.google.android.gms.common.api.Status;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.javascript.tools.debugger.Main;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.asynctask.InsertUserInfoTask;
@@ -55,11 +54,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private GoogleApiClient mGoogleApiClient;
     private final int RC_SIGN_IN = 0;
     private DataHandler mHandler;
-    private ImageButton mBabyButton;
-    private ImageButton mCctvButton;
+
     private Button mViewerButton;
+    private Button mCameraButton;
     private Button mStartButton;
     private ProgressDialog mProgressDialog;
+    private long backKeyPressedTime;
+    private Toast toast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,23 +70,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         INSTANCE = this;
         mHandler = new DataHandler();
         DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mStartButton = (Button) findViewById(R.id.sign_in_button);
         mStartButton.setOnClickListener(this);
-        mBabyButton = (ImageButton) findViewById(R.id.btn_baby_talk);
-        mBabyButton.setOnClickListener(this);
 
-        mCctvButton = (ImageButton) findViewById(R.id.btn_cctv);
-        mCctvButton.setOnClickListener(this);
 
         mViewerButton = (Button) findViewById(R.id.btn_viewer);
         mViewerButton.setOnClickListener(this);
-
+        mCameraButton = (Button) findViewById(R.id.btn_camera);
+        mCameraButton.setOnClickListener(this);
 
         if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestEmail()
-                    .requestIdToken(getString(R.string.server_client_id))
+                    .requestIdToken(getString(R.string.web_client_id))
+//                    .requestIdToken(getString(R.string.android_release_client_id))
                     .build();
 
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -96,8 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bindService(new Intent(this,
                 DataService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
-    private long backKeyPressedTime;
-    private Toast toast;
+
 
     public void onBackPressed() {
         if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
@@ -225,10 +222,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void signIn() {
-        if (DataPreference.getMode() == Config.MODE_NONE) {
-            Toast.makeText(this, getString(R.string.please_choose_mode), Toast.LENGTH_SHORT).show();
-            return;
-        }
         showProgress();
         if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
             if (!DataPreference.getEasyLogin()) {
@@ -404,65 +397,67 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (!json.isNull(Config.PARAM_DESCRIPTION)) {
                         String desciption = json.getString(Config.PARAM_DESCRIPTION);
                         if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
+                            if (DataPreference.getMode() == Config.MODE_CAMERA) {
+                                Intent intent = new Intent(MainActivity.this, CameraActivity.class);
+                                startActivity(intent);
+                            }
+//                            else{
+//                                Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
+//                                startActivity(intent);
+//                            }
+                        }
+                    } else {
+                        if (DataPreference.getMode() == Config.MODE_CAMERA) {
                             Intent intent = new Intent(MainActivity.this, CameraActivity.class);
                             startActivity(intent);
                         }
-                    } else {
-                        Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-                        startActivity(intent);
+//                        else{
+//                            Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
+//                            startActivity(intent);
+//                        }
                     }
-
 
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-
             }
         }
     };
 
-    private void setDefaultMode(){
+    private void setDefaultMode() {
         AllButtonUnselected();
-        if(DataPreference.getMode() == Config.MODE_BABY_TALK){
-            mBabyButton.setSelected(true);
-        }else if(DataPreference.getMode() == Config.MODE_CCTV){
-            mCctvButton.setSelected(true);
-        }else if(DataPreference.getMode() == Config.MODE_VIEWER){
+        if (DataPreference.getMode() == Config.MODE_CAMERA) {
+            mCameraButton.setSelected(true);
+        } else {
             mViewerButton.setSelected(true);
-        }else{
-
         }
     }
 
     private void AllButtonUnselected() {
-        mBabyButton.setSelected(false);
         mViewerButton.setSelected(false);
-        mCctvButton.setSelected(false);
+        mCameraButton.setSelected(false);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.sign_in_button:
-                signIn();
+                if(DataPreference.getMode() == Config.MODE_VIEWER){
+                    Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
+                    startActivity(intent);
+                }else {
+                    signIn();
+                }
                 break;
             case R.id.btn_viewer:
                 AllButtonUnselected();
                 v.setSelected(true);
                 DataPreference.setMode(Config.MODE_VIEWER);
                 break;
-            case R.id.btn_baby_talk:
+            case R.id.btn_camera:
                 AllButtonUnselected();
                 v.setSelected(true);
-                DataPreference.setMode(Config.MODE_BABY_TALK);
-                DataPreference.setPeerMode(Config.MODE_VIEWER);
-                break;
-            case R.id.btn_cctv:
-                AllButtonUnselected();
-                v.setSelected(true);
-                DataPreference.setMode(Config.MODE_CCTV);
-                DataPreference.setPeerMode(Config.MODE_VIEWER);
+                DataPreference.setMode(Config.MODE_CAMERA);
                 break;
         }
     }

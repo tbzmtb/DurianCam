@@ -7,9 +7,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -18,8 +21,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
+import com.ericsson.research.owr.HelperServerType;
+import com.google.android.gms.ads.*;
 import com.ericsson.research.owr.sdk.CameraSource;
 import com.ericsson.research.owr.sdk.InvalidDescriptionException;
 import com.ericsson.research.owr.sdk.RtcCandidate;
@@ -36,7 +44,14 @@ import com.ericsson.research.owr.sdk.VideoView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.service.DataService;
@@ -45,11 +60,12 @@ import kr.durian.duriancam.service.IDataServiceCallback;
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.DataPreference;
 import kr.durian.duriancam.util.Logger;
+import kr.durian.duriancam.util.MediaScanner;
 
 /**
  * Created by kimsunyung on 16. 7. 8..
  */
-public class CameraActivity extends AppCompatActivity implements
+public class CameraActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener,
         RtcSession.OnLocalCandidateListener,
         RtcSession.OnLocalDescriptionListener,
         View.OnClickListener {
@@ -73,6 +89,13 @@ public class CameraActivity extends AppCompatActivity implements
     private RelativeLayout mSelfViewDimLayout;
     private CheckHandler mCheckHandler;
     boolean checkFinish = true;
+    private RelativeLayout mRemoteViewParent;
+    private boolean startConnect = false;
+    private long remoteViewTimestemp = 0;
+    private int checkBuffferDataCount = 0;
+    private AudioManager mAudioManager;
+    private ImageView mBtnPhoto;
+    private CheckBufferHandler mCheckBufferHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,11 +113,17 @@ public class CameraActivity extends AppCompatActivity implements
             }
         }
         setContentView(R.layout.activity_camera);
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        mBtnPhoto = (ImageView) findViewById(R.id.btn_photo_save);
+        mBtnPhoto.setOnClickListener(this);
         mDimViewLayout = (RelativeLayout) findViewById(R.id.dim_view_layout);
         mSelfViewDimLayout = (RelativeLayout) findViewById(R.id.self_view_dim_layout);
+        mRemoteViewParent = (RelativeLayout) findViewById(R.id.remote_view_parent);
+
         setMicMute(false);
         setSpeakerSound(true);
         setSpeakerPhone(false);
+        mCheckBufferHandler = new CheckBufferHandler();
         mHandler = new CheckPeerCameraHandler();
         mCheckHandler = new CheckHandler();
         setWindowFrags();
@@ -103,16 +132,23 @@ public class CameraActivity extends AppCompatActivity implements
     }
 
     private void setMicMute(boolean mute) {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMicrophoneMute(mute);
+        Logger.d(TAG, "setMicMute call");
+        if (mAudioManager == null) {
+            return;
+        }
+        mAudioManager.setMicrophoneMute(mute);
 
     }
 
     private void setSpeakerSound(boolean enable) {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setStreamMute(AudioManager.STREAM_VOICE_CALL, enable);
-        audioManager.setStreamMute(AudioManager.STREAM_MUSIC, enable);
-        audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, enable);
+        Logger.d(TAG, "setSpeakerSound call");
+        if (mAudioManager == null) {
+            return;
+        }
+        mAudioManager.setStreamMute(AudioManager.STREAM_VOICE_CALL, enable);
+        mAudioManager.setStreamMute(AudioManager.STREAM_MUSIC, enable);
+        mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, enable);
+
     }
 
     private void setSpeakerPhone(boolean enable) {
@@ -130,12 +166,13 @@ public class CameraActivity extends AppCompatActivity implements
 
     private void startConnect(final int mode) {
         Logger.d(TAG, "sun startConnect call");
-
+        startConnect = true;
         if (mStreamSet != null) {
             Logger.d(TAG, "error mStreamSet == not null");
             return;
         }
         mRtcConfig = RtcConfigs.defaultConfig(Config.STUN_SERVER, Config.TURN_SERVER);
+//        mRtcConfig = RtcConfigs.defaultConfig(getHelperSever(Config.STUN_SERVER, Config.TURN_SERVER));
         mStreamSet = SimpleStreamSet.defaultConfig(true, true);
         mSelfView = CameraSource.getInstance().createVideoView();
         mRemoteView = mStreamSet.createRemoteView();
@@ -144,8 +181,9 @@ public class CameraActivity extends AppCompatActivity implements
         mRemoteView.setView(remoteView);
 
         TextureView selfView = (TextureView) findViewById(R.id.self_view);
+        selfView.setSurfaceTextureListener(this);
         mSelfView.setView(selfView);
-        mSelfView.setMirrored(true);
+//        mSelfView.setMirrored(true);
 
         if (mode == Config.MODE_VIEWER) {
             mRtcSession = RtcSessions.create(mRtcConfig);
@@ -155,6 +193,48 @@ public class CameraActivity extends AppCompatActivity implements
             Logger.d(TAG, "mRtcSession init complete");
         }
 
+    }
+
+    private Collection<RtcConfig.HelperServer> getHelperSever(String stunServerUrl, String tunnServerUrl) {
+        ArrayList<RtcConfig.HelperServer> mHelperServers = new ArrayList<>();
+
+        String[] split = stunServerUrl.split(":");
+        if (split.length < 1 || split.length > 2) {
+            throw new IllegalArgumentException("invalid stun server url: " + stunServerUrl);
+        }
+        final int stun_port;
+        if (split.length == 2) {
+            stun_port = Integer.parseInt(split[1]);
+        } else {
+            stun_port = 3478;
+        }
+        mHelperServers.add(new RtcConfig.HelperServer(HelperServerType.STUN, split[0], stun_port, "gorst", "hero"));
+
+        split = tunnServerUrl.split(":");
+        if (split.length < 1 || split.length > 5) {
+            throw new IllegalArgumentException("invalid stun server url: " + tunnServerUrl);
+        }
+        final int turn_port;
+        if (split.length >= 2) {
+            turn_port = Integer.parseInt(split[1]);
+        } else {
+            turn_port = 3478;
+        }
+        final String username;
+        if (split.length >= 3) {
+            username = split[2];
+        } else {
+            username = "";
+        }
+        final String password;
+        if (split.length >= 4) {
+            password = split[3];
+        } else {
+            password = "";
+        }
+
+        mHelperServers.add(new RtcConfig.HelperServer(HelperServerType.TURN_TCP, split[0], turn_port, username, password));
+        return mHelperServers;
     }
 
     private void showProgress() {
@@ -240,7 +320,7 @@ public class CameraActivity extends AppCompatActivity implements
 
     public void callCheckHandler() {
         if (mCheckHandler != null) {
-            mCheckHandler.postDelayed(mCheckRunnable, 60000*30);
+            mCheckHandler.postDelayed(mCheckRunnable, 60000 * 30);
 
         }
     }
@@ -281,8 +361,13 @@ public class CameraActivity extends AppCompatActivity implements
     @Override
     public void finish() {
         Logger.d(TAG, "finish call");
+        if (startConnect) {
+            return;
+        }
         mDimViewLayout.setVisibility(View.VISIBLE);
         mSelfViewDimLayout.setVisibility(View.VISIBLE);
+        mCheckBufferHandler.removeCallbacks(mCheckBufferRunnable);
+
         if (DataPreference.getMode() != Config.MODE_VIEWER && !checkFinish) {
             cancelProgress();
             sendHangupData();
@@ -304,7 +389,6 @@ public class CameraActivity extends AppCompatActivity implements
             unCallHandler();
             super.finish();
         }
-
     }
 
     private void registerServiceCallback() {
@@ -392,6 +476,13 @@ public class CameraActivity extends AppCompatActivity implements
         }
     }
 
+    private void startAd() {
+        AdView adView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+//        AdRequest adRequest = new AdRequest.Builder().addTestDevice("57DCA262185892DD6E21498192076F49").build();
+        adView.loadAd(adRequest);
+    }
+
     ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -404,7 +495,9 @@ public class CameraActivity extends AppCompatActivity implements
                 if (DataPreference.getMode() == Config.MODE_VIEWER) {
                     unCallHandler();
                     callHandler();
+                    startAd();
                 }
+
             }
         }
 
@@ -422,7 +515,7 @@ public class CameraActivity extends AppCompatActivity implements
             json.put(Config.PARAM_SESSION_ID, Long.toString(System.currentTimeMillis()));
             json.put(Config.PARAM_FROM, DataPreference.getRtcid());
             json.put(Config.PARAM_TO, DataPreference.getPeerRtcid());
-            json.put(Config.PARAM_MODE, "");
+            json.put(Config.PARAM_MODE, DataPreference.getViewerWillConnectMode());
             DataPreference.setOfferData(json.toString());
             return json;
         } catch (Exception e) {
@@ -440,8 +533,7 @@ public class CameraActivity extends AppCompatActivity implements
             json.put(Config.PARAM_SESSION_ID, mReceiveOfferData.optString(Config.PARAM_SESSION_ID));
             json.put(Config.PARAM_FROM, mReceiveOfferData.optString(Config.PARAM_FROM));
             json.put(Config.PARAM_TO, mReceiveOfferData.optString(Config.PARAM_TO));
-            json.put(Config.PARAM_MODE, String.valueOf(DataPreference.getMode()));
-            DataPreference.setOfferData(json.toString());
+            json.put(Config.PARAM_MODE, "");
             return json;
         } catch (Exception e) {
             e.printStackTrace();
@@ -593,9 +685,12 @@ public class CameraActivity extends AppCompatActivity implements
                         mService.sendData(getOfferBusyAckData().toString());
                         return;
                     } else {
+                        startConnect = true;
                         mReceiveOfferData = new JSONObject(data);
                         mService.sendData(getOfferAckData().toString());
+                        DataPreference.setViewerWillConnectMode(Integer.parseInt(mReceiveOfferData.getString(Config.PARAM_MODE)));
                         JSONObject result = new JSONObject();
+
                         result.put(Config.PARAM_TYPE, mReceiveOfferData.optString(Config.PARAM_TYPE));
                         result.put(Config.PARAM_SDP, mReceiveOfferData.optString(Config.PARAM_SDP));
 
@@ -632,8 +727,6 @@ public class CameraActivity extends AppCompatActivity implements
                 cancelProgress();
                 try {
                     JSONObject result = new JSONObject(data);
-                    String mode = result.getString(Config.PARAM_MODE);
-                    DataPreference.setPeerMode(Integer.parseInt(mode));
                     JSONObject json = new JSONObject();
                     json.put(Config.PARAM_TYPE, Config.PARAM_ANSWER);
                     json.put(Config.PARAM_SDP, result.optString(Config.PARAM_SDP));
@@ -653,8 +746,12 @@ public class CameraActivity extends AppCompatActivity implements
                 if (DataPreference.getMode() == Config.MODE_VIEWER) {
                     mDimViewLayout.setVisibility(View.GONE);
 
-                    if (DataPreference.getPeerMode() == Config.MODE_CCTV) {
+                    if (DataPreference.getViewerWillConnectMode() == Config.MODE_CCTV) {
                         mSelfViewDimLayout.setVisibility(View.VISIBLE);
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 10f);
+                        mRemoteViewParent = (RelativeLayout) findViewById(R.id.remote_view_parent);
+                        mRemoteViewParent.setLayoutParams(params);
                         Handler handler = new Handler();
                         handler.postDelayed(new Runnable() {
                             @Override
@@ -666,7 +763,7 @@ public class CameraActivity extends AppCompatActivity implements
                             }
                         }, 2000);
 
-                    } else if (DataPreference.getPeerMode() == Config.MODE_BABY_TALK) {
+                    } else if (DataPreference.getViewerWillConnectMode() == Config.MODE_BABY_TALK) {
                         mSelfViewDimLayout.setVisibility(View.GONE);
                         Handler handler = new Handler();
                         handler.postDelayed(new Runnable() {
@@ -681,6 +778,7 @@ public class CameraActivity extends AppCompatActivity implements
 
                     }
                 }
+                checkBufferDataIfErrorThenFinish();
             } else if (value == Config.HANDLER_MODE_ANSWER_ACK) {
                 cancelProgress();
                 getAnswerAck = true;
@@ -688,7 +786,7 @@ public class CameraActivity extends AppCompatActivity implements
                 for (int i = 0; i < mCandidates.size(); i++) {
                     mService.sendData(mCandidates.get(i).toString());
                 }
-                if (DataPreference.getMode() == Config.MODE_CCTV) {
+                if (DataPreference.getViewerWillConnectMode() == Config.MODE_CCTV) {
                     mDimViewLayout.setVisibility(View.VISIBLE);
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
@@ -700,7 +798,7 @@ public class CameraActivity extends AppCompatActivity implements
                         }
                     }, 2000);
 
-                } else if (DataPreference.getMode() == Config.MODE_BABY_TALK) {
+                } else if (DataPreference.getViewerWillConnectMode() == Config.MODE_BABY_TALK) {
                     mDimViewLayout.setVisibility(View.GONE);
                     mSelfViewDimLayout.setVisibility(View.GONE);
                     Handler handler = new Handler();
@@ -714,6 +812,7 @@ public class CameraActivity extends AppCompatActivity implements
                         }
                     }, 2000);
                 }
+                checkBufferDataIfErrorThenFinish();
             } else if (value == Config.HANDLER_MODE_CANDIDATE) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -724,6 +823,8 @@ public class CameraActivity extends AppCompatActivity implements
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                startConnect = false;
+
             } else if (value == Config.HANDLER_MODE_CONFIG_ACK) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -733,8 +834,13 @@ public class CameraActivity extends AppCompatActivity implements
                             unCallHandler();
                             startConnect(DataPreference.getMode());
                         } else {
-                            startConnect(DataPreference.getMode());
-                            sendPeerCameraExist(json);
+                            if (mReceiveOfferData != null) {
+                                Logger.d(TAG, "mReceiveOfferData not null");
+                                mService.sendData(getOfferBusyAckData().toString());
+                            } else {
+                                startConnect(DataPreference.getMode());
+                                sendPeerCameraExist(json);
+                            }
                         }
                     }
 
@@ -742,7 +848,6 @@ public class CameraActivity extends AppCompatActivity implements
                     e.printStackTrace();
                 }
             } else if (value == Config.HANDLER_MODE_HANGUP) {
-                Logger.d(TAG, "이게 왜 호출되지 data = " + data);
                 try {
                     JSONObject json = new JSONObject(data);
                     JSONObject result = new JSONObject();
@@ -818,6 +923,39 @@ public class CameraActivity extends AppCompatActivity implements
         }
     }
 
+    public class CheckBufferHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            checkBufferDataIfErrorThenFinish();
+
+        }
+    }
+
+    private void checkBufferDataIfErrorThenFinish() {
+        Logger.d(TAG, "checkBufferDataIfErrorThenFinish call ");
+        if (mRemoteView != null) {
+            if (remoteViewTimestemp == mRemoteView.checkVideoView()) {
+                checkBuffferDataCount++;
+            } else {
+                checkBuffferDataCount = 0;
+            }
+            remoteViewTimestemp = mRemoteView.checkVideoView();
+        }
+        if (checkBuffferDataCount > 2) {
+            finish();
+            return;
+        }
+        mCheckBufferHandler.postDelayed(mCheckBufferRunnable, 4000);
+    }
+
+    private Runnable mCheckBufferRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mCheckBufferHandler.sendEmptyMessage(0);
+        }
+    };
+
     private JSONObject getCheckData() {
         JSONObject jsono = new JSONObject();
         try {
@@ -845,6 +983,97 @@ public class CameraActivity extends AppCompatActivity implements
 
     @Override
     public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_photo_save:
+                saveBitmapToFileCache(CameraActivity.this, mRemoteView.getView().getBitmap(), getSaveImageFileExternalDirectory(), getPictureFileName());
+                break;
+        }
+    }
 
+    public static String getSaveImageFileExternalDirectory() {
+        File fileRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "Durian");
+        if (!fileRoot.exists()) {
+            fileRoot.mkdir();
+        }
+        return fileRoot.getPath() + File.separator;
+    }
+
+    public String getPictureFileName() {
+        Date now = new Date(System.currentTimeMillis());
+        SimpleDateFormat df = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+        String formattedDate = df.format(now);
+        String fileExtention = ".jpg";
+        return "durian_" + formattedDate + fileExtention;
+    }
+
+    public void saveBitmapToFileCache(Context context, Bitmap bitmap, String strFilePath, String strFileName) {
+        File filepath = new File(strFilePath);
+
+        if (!filepath.exists()) {
+            filepath.mkdirs();
+        }
+        File fileCacheItem = new File(strFilePath + strFileName);
+        OutputStream out = null;
+        try {
+            fileCacheItem.createNewFile();
+            out = new FileOutputStream(fileCacheItem);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Toast.makeText(context, context.getResources().getText(R.string.save_image_into_gallery), Toast.LENGTH_SHORT).show();
+
+        new MediaScanner(context, new File(strFilePath + strFileName));
+
+    }
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture texture, int i, int i1) {
+        Logger.d(TAG, "onSurfaceTextureAvailable call ");
+//        assert texture != null;
+//        Surface previewSurface = new Surface(texture);
+//
+//        MediaRecorder mMediaRecorder = new MediaRecorder();
+//        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+//        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+//        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+//        mMediaRecorder.setOutputFile(getVideoFilePath());
+//        mMediaRecorder.setVideoEncodingBitRate(10000000);
+//        mMediaRecorder.setVideoFrameRate(30);
+//        mMediaRecorder.setVideoSize(640, 360);
+//        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+//        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+//        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+////        mMediaRecorder.setOrientationHint();
+//        try {
+//            mMediaRecorder.prepare();
+//        }catch (IOException e){
+//            e.printStackTrace();
+//        }
+//        List<Surface> surfaces = new ArrayList<>();
+//        Surface mRecorderSurface = mMediaRecorder.getSurface();
+//        surfaces.add(mRecorderSurface);
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
+        Logger.d(TAG, "onSurfaceTextureSizeChanged call ");
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+        Logger.d(TAG, "onSurfaceTextureDestroyed call ");
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+        Logger.d(TAG, "onSurfaceTextureUpdated call ");
     }
 }

@@ -68,6 +68,7 @@ public class VideoViewImpl implements VideoView, MediaSourceListener {
         mVideoRenderer.setHeight(480);
 
 
+
         mediaSourceProvider.addMediaSourceListener(this);
     }
 

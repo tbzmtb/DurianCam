@@ -87,10 +87,10 @@ public class DataPreference {
         }
     }
 
-    public static void setPeerMode(int mode){
+    public static void setViewerWillConnectMode(int mode){
         if (PREF != null) {
             SharedPreferences.Editor editor = PREF.edit();
-            editor.putInt(Config.PREF_PEER_MODE_KEY, mode);
+            editor.putInt(Config.PREF_VIEWER_WILL_CONNECT_MODE_KEY, mode);
             editor.commit();
         } else {
             Logger.d(TAG, "PREF == " + PREF);
@@ -159,11 +159,11 @@ public class DataPreference {
     }
 
     public static int getMode() {
-        return PREF != null ? PREF.getInt(Config.PREF_MODE_KEY, Config.MODE_NONE) : Config.MODE_NONE;
+        return PREF != null ? PREF.getInt(Config.PREF_MODE_KEY, Config.MODE_VIEWER) : Config.MODE_VIEWER;
     }
 
-    public static int getPeerMode() {
-        return PREF != null ? PREF.getInt(Config.PREF_PEER_MODE_KEY, Config.MODE_NONE) : Config.MODE_NONE;
+    public static int getViewerWillConnectMode() {
+        return PREF != null ? PREF.getInt(Config.PREF_VIEWER_WILL_CONNECT_MODE_KEY, Config.MODE_BABY_TALK) : Config.MODE_BABY_TALK;
     }
 
     public static String getOfferSendData(){
