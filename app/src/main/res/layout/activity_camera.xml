@@ -7,69 +7,84 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="10">
+        android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/remote_view_parent"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="7">
-
-            <TextureView
-                android:id="@+id/remote_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </RelativeLayout>
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            ads:adSize="SMART_BANNER"
+            ads:adUnitId="@string/banner_ad_unit_id"></com.google.android.gms.ads.AdView>
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:weightSum="10">
 
             <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="5">
+                android:id="@+id/remote_view_parent"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="7">
 
                 <TextureView
-                    android:id="@+id/self_view"
+                    android:id="@+id/remote_view"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="visible" />
+                    android:layout_height="match_parent" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="3"
+                android:orientation="vertical"
+                android:weightSum="10">
 
                 <RelativeLayout
-                    android:id="@+id/self_view_dim_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#000000"
-                    android:visibility="visible"></RelativeLayout>
-            </RelativeLayout>
+                    android:layout_height="0dp"
+                    android:layout_weight="5">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="5"
-                android:background="#000000">
+                    <TextureView
+                        android:id="@+id/self_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="visible" />
 
-                <ImageView
-                    android:id="@+id/btn_photo_save"
+                    <RelativeLayout
+                        android:id="@+id/self_view_dim_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#000000"
+                        android:visibility="visible"></RelativeLayout>
+                </RelativeLayout>
+
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#000000"></ImageView>
-            </RelativeLayout>
+                    android:layout_height="0dp"
+                    android:layout_weight="5"
+                    android:background="#000000">
+
+                    <RelativeLayout
+                        android:id="@+id/btn_photo_save"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#000000">
+
+                        <TextView
+                            style="@style/TextAppearance.AppCompat.Large"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:text="Capture"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+                </RelativeLayout>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id"></com.google.android.gms.ads.AdView>
 
     <RelativeLayout
         android:id="@+id/dim_view_layout"
@@ -77,4 +92,7 @@
         android:layout_height="match_parent"
         android:background="#000000"
         android:visibility="visible"></RelativeLayout>
+
+    <include layout="@layout/secure_setting_layout" />
+
 </RelativeLayout>

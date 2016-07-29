@@ -12,7 +12,6 @@ import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -21,12 +20,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ericsson.research.owr.HelperServerType;
 import com.google.android.gms.ads.*;
 import com.ericsson.research.owr.sdk.CameraSource;
 import com.ericsson.research.owr.sdk.InvalidDescriptionException;
@@ -50,7 +52,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 
 import kr.durian.duriancam.R;
@@ -90,12 +91,21 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private CheckHandler mCheckHandler;
     boolean checkFinish = true;
     private RelativeLayout mRemoteViewParent;
-    private boolean startConnect = false;
+    private boolean startConnecting = false;
     private long remoteViewTimestemp = 0;
     private int checkBuffferDataCount = 0;
     private AudioManager mAudioManager;
-    private ImageView mBtnPhoto;
+    private RelativeLayout mBtnPhoto;
     private CheckBufferHandler mCheckBufferHandler;
+    private RelativeLayout mSecureSettingView;
+    //    private TextView mFinishSecureMode;
+    private Switch mMotionDetectModeOnOffSwitch;
+    private Switch mDisplayOnOffSwitch;
+    private SeekBar mDetectSensitivity;
+    private Switch mVideoRecordingSwitch;
+    private long backKeyPressedTime;
+    private ImageButton mSecureSettingBack;
+    private Toast toast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,12 +124,23 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         }
         setContentView(R.layout.activity_camera);
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mBtnPhoto = (ImageView) findViewById(R.id.btn_photo_save);
+        mBtnPhoto = (RelativeLayout) findViewById(R.id.btn_photo_save);
         mBtnPhoto.setOnClickListener(this);
         mDimViewLayout = (RelativeLayout) findViewById(R.id.dim_view_layout);
         mSelfViewDimLayout = (RelativeLayout) findViewById(R.id.self_view_dim_layout);
         mRemoteViewParent = (RelativeLayout) findViewById(R.id.remote_view_parent);
+        mSecureSettingView = (RelativeLayout) findViewById(R.id.secure_setting_layout);
+        mDisplayOnOffSwitch = (Switch) findViewById(R.id.display_on_off_switch);
+        mDisplayOnOffSwitch.setOnCheckedChangeListener(mSwitchChangeListener);
+        mDetectSensitivity = (SeekBar) findViewById(R.id.secure_sensitive_seek_bar);
+        mDetectSensitivity.setOnSeekBarChangeListener(mDetectSensitivityChangeListener);
+        mVideoRecordingSwitch = (Switch) findViewById(R.id.video_recording_switch);
+        mVideoRecordingSwitch.setOnCheckedChangeListener(mSwitchChangeListener);
+        mMotionDetectModeOnOffSwitch = (Switch) findViewById(R.id.motion_detect_mode_on_off_switch);
+        mMotionDetectModeOnOffSwitch.setOnCheckedChangeListener(mSwitchChangeListener);
 
+        mSecureSettingBack = (ImageButton) findViewById(R.id.btn_back);
+        mSecureSettingBack.setOnClickListener(this);
         setMicMute(false);
         setSpeakerSound(true);
         setSpeakerPhone(false);
@@ -127,8 +148,105 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         mHandler = new CheckPeerCameraHandler();
         mCheckHandler = new CheckHandler();
         setWindowFrags();
+        DataPreference.setSecuringMode(false);
         bindService(new Intent(this,
                 DataService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private SeekBar.OnSeekBarChangeListener mDetectSensitivityChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            DataPreference.setDetectSensitivity(String.valueOf(seekBar.getProgress()));
+            sendSecureChangeOption();
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+        }
+    };
+
+    private CompoundButton.OnCheckedChangeListener mSwitchChangeListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+            switch (compoundButton.getId()) {
+                case R.id.display_on_off_switch:
+                    if (b) {
+                        DataPreference.setSecureDisplayEnable(Config.DISPLAY_HIDE_ON);
+                    } else {
+                        DataPreference.setSecureDisplayEnable(Config.DISPLAY_HIDE_OFF);
+                    }
+                    sendSecureChangeOption();
+                    break;
+                case R.id.video_recording_switch:
+                    if (b) {
+                        DataPreference.setVideoRecordingEnable(Config.VIDEO_RECORDING_ON);
+                    } else {
+                        DataPreference.setVideoRecordingEnable(Config.VIDEO_RECORDING_OFF);
+                    }
+                    sendSecureChangeOption();
+
+                    break;
+                case R.id.motion_detect_mode_on_off_switch:
+                    if (!b) {
+                        sendSecureFinishData();
+                        finish();
+                    }
+                    break;
+            }
+
+        }
+    };
+
+    private void setDetectSensitivitySeekBar(String value) {
+        if (value == null) {
+            return;
+        }
+        try {
+            if (mDetectSensitivity != null) {
+                mDetectSensitivity.setProgress(Integer.parseInt(value));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setMotionDetectModeEnable(String value){
+        if (value == null) {
+            return;
+        }
+        if (value.equals(Config.MOTION_DETECT_MODE_ON)) {
+            mMotionDetectModeOnOffSwitch.setChecked(true);
+        } else {
+            mMotionDetectModeOnOffSwitch.setChecked(false);
+        }
+    }
+
+    private void setSecureDisplayEnalbe(String value){
+        if (value == null) {
+            return;
+        }
+        if (value.equals(Config.DISPLAY_HIDE_ON)) {
+            mDisplayOnOffSwitch.setChecked(true);
+        } else {
+            mDisplayOnOffSwitch.setChecked(false);
+        }
+    }
+
+    private void setVideoRecordingEnable(String value) {
+        if (value == null) {
+            return;
+        }
+        if (value.equals(Config.VIDEO_RECORDING_ON)) {
+            mVideoRecordingSwitch.setChecked(true);
+        } else {
+            mVideoRecordingSwitch.setChecked(false);
+        }
     }
 
     private void setMicMute(boolean mute) {
@@ -145,9 +263,13 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         if (mAudioManager == null) {
             return;
         }
-        mAudioManager.setStreamMute(AudioManager.STREAM_VOICE_CALL, enable);
-        mAudioManager.setStreamMute(AudioManager.STREAM_MUSIC, enable);
-        mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, enable);
+        try {
+            mAudioManager.setStreamMute(AudioManager.STREAM_VOICE_CALL, enable);
+            mAudioManager.setStreamMute(AudioManager.STREAM_MUSIC, enable);
+            mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, enable);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -165,14 +287,13 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     }
 
     private void startConnect(final int mode) {
-        Logger.d(TAG, "sun startConnect call");
-        startConnect = true;
+        Logger.d(TAG, "sun startConnecting call");
+        startConnecting = true;
         if (mStreamSet != null) {
             Logger.d(TAG, "error mStreamSet == not null");
             return;
         }
         mRtcConfig = RtcConfigs.defaultConfig(Config.STUN_SERVER, Config.TURN_SERVER);
-//        mRtcConfig = RtcConfigs.defaultConfig(getHelperSever(Config.STUN_SERVER, Config.TURN_SERVER));
         mStreamSet = SimpleStreamSet.defaultConfig(true, true);
         mSelfView = CameraSource.getInstance().createVideoView();
         mRemoteView = mStreamSet.createRemoteView();
@@ -183,7 +304,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         TextureView selfView = (TextureView) findViewById(R.id.self_view);
         selfView.setSurfaceTextureListener(this);
         mSelfView.setView(selfView);
-//        mSelfView.setMirrored(true);
+        mSelfView.setMirrored(true);
 
         if (mode == Config.MODE_VIEWER) {
             mRtcSession = RtcSessions.create(mRtcConfig);
@@ -195,62 +316,24 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
 
     }
 
-    private Collection<RtcConfig.HelperServer> getHelperSever(String stunServerUrl, String tunnServerUrl) {
-        ArrayList<RtcConfig.HelperServer> mHelperServers = new ArrayList<>();
-
-        String[] split = stunServerUrl.split(":");
-        if (split.length < 1 || split.length > 2) {
-            throw new IllegalArgumentException("invalid stun server url: " + stunServerUrl);
-        }
-        final int stun_port;
-        if (split.length == 2) {
-            stun_port = Integer.parseInt(split[1]);
-        } else {
-            stun_port = 3478;
-        }
-        mHelperServers.add(new RtcConfig.HelperServer(HelperServerType.STUN, split[0], stun_port, "gorst", "hero"));
-
-        split = tunnServerUrl.split(":");
-        if (split.length < 1 || split.length > 5) {
-            throw new IllegalArgumentException("invalid stun server url: " + tunnServerUrl);
-        }
-        final int turn_port;
-        if (split.length >= 2) {
-            turn_port = Integer.parseInt(split[1]);
-        } else {
-            turn_port = 3478;
-        }
-        final String username;
-        if (split.length >= 3) {
-            username = split[2];
-        } else {
-            username = "";
-        }
-        final String password;
-        if (split.length >= 4) {
-            password = split[3];
-        } else {
-            password = "";
-        }
-
-        mHelperServers.add(new RtcConfig.HelperServer(HelperServerType.TURN_TCP, split[0], turn_port, username, password));
-        return mHelperServers;
-    }
-
     private void showProgress() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (mProgressDialog == null) {
-                    mProgressDialog = new ProgressDialog(CameraActivity.this);
-                    mProgressDialog.setCanceledOnTouchOutside(false);
-                    if (DataPreference.getMode() != Config.MODE_VIEWER) {
-                        mProgressDialog.setMessage(getString(R.string.wait_for_view));
-                    } else {
-                        mProgressDialog.setMessage(getString(R.string.wait_for_connection));
+                try {
+                    if (mProgressDialog == null) {
+                        mProgressDialog = new ProgressDialog(CameraActivity.this);
+                        mProgressDialog.setCanceledOnTouchOutside(false);
+                        if (DataPreference.getMode() != Config.MODE_VIEWER) {
+                            mProgressDialog.setMessage(getString(R.string.wait_for_view));
+                        } else {
+                            mProgressDialog.setMessage(getString(R.string.wait_for_connection));
+                        }
+                        mProgressDialog.setOnDismissListener(mProgressDismissListener);
+                        mProgressDialog.show();
                     }
-                    mProgressDialog.setOnDismissListener(mProgressDismissListener);
-                    mProgressDialog.show();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -344,7 +427,11 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            checkPeerCameraExist();
+            if (DataPreference.getViewerWillConnectMode() == Config.MODE_SECURE) {
+                checkPeerCameraExistForSecure();
+            } else {
+                checkPeerCameraExist();
+            }
             callHandler();
 
         }
@@ -357,11 +444,23 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
 
     }
 
+    public void onBackPressed() {
+        if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
+            backKeyPressedTime = System.currentTimeMillis();
+            toast = Toast.makeText(CameraActivity.this, getResources().getString(R.string.backbutton_click_is_finish), Toast.LENGTH_SHORT);
+            toast.show();
+            return;
+        }
+        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
+            finish();
+            toast.cancel();
+        }
+    }
 
     @Override
     public void finish() {
         Logger.d(TAG, "finish call");
-        if (startConnect) {
+        if (startConnecting) {
             return;
         }
         mDimViewLayout.setVisibility(View.VISIBLE);
@@ -377,11 +476,21 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             setSpeakerSound(true);
             setSpeakerPhone(false);
             checkFinish = true;
+            getAnswerAck = false;
             return;
         } else {
             cancelProgress();
-            sendHangupData();
-            disconnectSession();
+            if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                if (getAnswer) {
+                    sendHangupData();
+                    disconnectSession();
+                }
+            } else {
+                if (getAnswerAck) {
+                    sendHangupData();
+                    disconnectSession();
+                }
+            }
             closeWebSocket();
             unregisterServiceCallback();
             unRegisterCheckHandler();
@@ -440,6 +549,21 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         }
     }
 
+    private void checkPeerCameraExistForSecure() {
+        try {
+            if (mService != null) {
+                JSONObject json = getCheckPeerCameraExistForSecure();
+                if (json == null) {
+                    Logger.d(TAG, "json = " + json);
+                    return;
+                }
+                mService.sendData(json.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void sendHangupData() {
         if (sendHangupAck) {
             return;
@@ -473,6 +597,90 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void secureSettingViewVisible(boolean visible, JSONObject json) {
+        if (visible) {
+            mSecureSettingView.setVisibility(View.VISIBLE);
+        } else {
+            mSecureSettingView.setVisibility(View.GONE);
+        }
+        if (json != null) {
+            try {
+                Logger.d(TAG, "받은 데이타 =" + json);
+                JSONObject config = json.getJSONObject(Config.PARAM_CONFIG);
+                DataPreference.setVideoRecordingEnable(config.getString(Config.PARAM_VIDEO_ON_OFF_VALUE));
+                mVideoRecordingSwitch.setOnCheckedChangeListener(null);
+                setVideoRecordingEnable(config.getString(Config.PARAM_VIDEO_ON_OFF_VALUE));
+                mVideoRecordingSwitch.setOnCheckedChangeListener(mSwitchChangeListener);
+
+                DataPreference.setDetectSensitivity(config.getString(Config.PARAM_DETECT_SENSITIVITY_VALUE));
+                setDetectSensitivitySeekBar(config.getString(Config.PARAM_DETECT_SENSITIVITY_VALUE));
+
+                DataPreference.setSecureDisplayEnable(config.getString(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE));
+                setSecureDisplayEnalbe(config.getString(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE));
+
+                setMotionDetectModeEnable(config.getString(Config.PARAM_DETECT_MODE_ON_OFF_VALUE));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendSecureChangeOption() {
+        try {
+            if (mService != null) {
+                JSONObject data = new JSONObject();
+                JSONObject kobj = new JSONObject();
+                kobj.put(Config.PARAM_VIDEO_ON_OFF_VALUE, DataPreference.getVideoRecordingEnable());
+                kobj.put(Config.PARAM_DETECT_SENSITIVITY_VALUE, DataPreference.getDetectSensitivity());
+                kobj.put(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE, DataPreference.getSecureDisplayEnable());
+                data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+                data.put(Config.PARAM_FROM, DataPreference.getPeerRtcid());
+                data.put(Config.PARAM_TO, DataPreference.getRtcid());
+                data.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
+                data.put(Config.PARAM_DESCRIPTION, Config.PARAM_SECURE_CHANGE_OPTION);
+                data.put(Config.PARAM_CONFIG, kobj);
+                mService.sendData(data.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPeerCameraExistForSecure(JSONObject json) {
+        try {
+            if (mService != null) {
+                JSONObject data = new JSONObject();
+                JSONObject kobj = new JSONObject();
+                kobj.put(Config.PARAM_VIDEO_ON_OFF_VALUE, DataPreference.getVideoRecordingEnable());
+                kobj.put(Config.PARAM_DETECT_SENSITIVITY_VALUE, DataPreference.getDetectSensitivity());
+                kobj.put(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE, DataPreference.getSecureDisplayEnable());
+                kobj.put(Config.PARAM_DETECT_MODE_ON_OFF_VALUE, getStringOnOffValue(DataPreference.getSecuringMode()));
+                data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+                data.put(Config.PARAM_FROM, json.getString(Config.PARAM_TO));
+                data.put(Config.PARAM_TO, json.getString(Config.PARAM_FROM));
+                data.put(Config.PARAM_SESSION_ID, json.getString(Config.PARAM_SESSION_ID));
+                data.put(Config.PARAM_DESCRIPTION, json.getString(Config.PARAM_DESCRIPTION));
+                data.put(Config.PARAM_CONFIG, kobj);
+                mService.sendData(data.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getStringOnOffValue(boolean enable){
+        if(enable){
+            return Config.MOTION_DETECT_MODE_ON;
+        }else{
+            return Config.MOTION_DETECT_MODE_OFF;
         }
     }
 
@@ -591,6 +799,22 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         return null;
     }
 
+    private JSONObject getCheckPeerCameraExistForSecure() {
+        Logger.d(TAG, "getCheckPeerCameraExistForSecure call");
+        try {
+            JSONObject json = new JSONObject();
+            json.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+            json.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
+            json.put(Config.PARAM_FROM, DataPreference.getPeerRtcid());
+            json.put(Config.PARAM_TO, DataPreference.getRtcid());
+            json.put(Config.PARAM_DESCRIPTION, Config.PARAM_CHECK_CAMERA_PEER_EXIST_FOR_SECURE);
+            return json;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private JSONObject getHangUpData() {
         Logger.d(TAG, "getHangUpData call");
         try {
@@ -615,6 +839,24 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void sendBusyConfigAckData(JSONObject json, String description) {
+        try {
+            if (mService != null) {
+                JSONObject data = new JSONObject();
+                data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+                data.put(Config.PARAM_FROM, json.getString(Config.PARAM_TO));
+                data.put(Config.PARAM_TO, json.getString(Config.PARAM_FROM));
+                data.put(Config.PARAM_SESSION_ID, json.getString(Config.PARAM_SESSION_ID));
+                data.put(Config.PARAM_DESCRIPTION, description);
+                mService.sendData(data.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private JSONObject getOfferAckData() {
@@ -674,6 +916,25 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         return null;
     }
 
+    private void sendSecureFinishData() {
+        Logger.d(TAG, "sendSecureFinishData call");
+        try {
+            if (mService != null) {
+                JSONObject data = new JSONObject();
+                data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+                data.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
+                data.put(Config.PARAM_FROM, DataPreference.getPeerRtcid());
+                data.put(Config.PARAM_TO, DataPreference.getRtcid());
+                data.put(Config.PARAM_DESCRIPTION, Config.PARAM_FINISH_SECURE);
+                mService.sendData(data.toString());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     final IDataServiceCallback mCallbcak = new IDataServiceCallback.Stub() {
 
         @Override
@@ -685,7 +946,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                         mService.sendData(getOfferBusyAckData().toString());
                         return;
                     } else {
-                        startConnect = true;
+                        startConnecting = true;
                         mReceiveOfferData = new JSONObject(data);
                         mService.sendData(getOfferAckData().toString());
                         DataPreference.setViewerWillConnectMode(Integer.parseInt(mReceiveOfferData.getString(Config.PARAM_MODE)));
@@ -823,7 +1084,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                startConnect = false;
+                startConnecting = false;
 
             } else if (value == Config.HANDLER_MODE_CONFIG_ACK) {
                 try {
@@ -834,13 +1095,52 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                             unCallHandler();
                             startConnect(DataPreference.getMode());
                         } else {
-                            if (mReceiveOfferData != null) {
-                                Logger.d(TAG, "mReceiveOfferData not null");
-                                mService.sendData(getOfferBusyAckData().toString());
+                            if (mReceiveOfferData != null) { //통화중일때
+                                Logger.d(TAG, "mReceiveOfferData not null calling");
+                                sendBusyConfigAckData(json, Config.PARAM_PEER_IS_CALLING);
+                            } else if (DataPreference.getSecuringMode()) {
+                                Logger.d(TAG, "securing mode ");
+                                sendBusyConfigAckData(json, Config.PARAM_PEER_IS_SECURING);
                             } else {
                                 startConnect(DataPreference.getMode());
                                 sendPeerCameraExist(json);
                             }
+                        }
+                    } else if (description.equals(Config.PARAM_CHECK_CAMERA_PEER_EXIST_FOR_SECURE)) {
+                        if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                            unCallHandler();
+                            cancelProgress();
+                            secureSettingViewVisible(true, json);
+                        } else {
+                            if (mReceiveOfferData != null) { //통화중일때
+                                Logger.d(TAG, "mReceiveOfferData not null");
+                                sendBusyConfigAckData(json, Config.PARAM_PEER_IS_CALLING);
+                            } else {
+                                if (DataPreference.getSecuringMode()) {
+                                    sendPeerCameraExistForSecure(json);
+                                } else {
+                                    sendPeerCameraExistForSecure(json);
+                                    Intent intent = new Intent(CameraActivity.this, SecureActivity.class);
+                                    startActivity(intent);
+                                }
+
+                            }
+                        }
+                    } else if (description.equals(Config.PARAM_FINISH_SECURE)) {
+                        if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                            finish();
+                        } else {
+                            sendBroadcast(new Intent(Config.BROADCAST_FINISH_SECURE));
+                        }
+                    } else if (description.equals(Config.PARAM_SECURE_CHANGE_OPTION)) {
+                        try {
+                            JSONObject config = json.getJSONObject(Config.PARAM_CONFIG);
+                            DataPreference.setDetectSensitivity(config.getString(Config.PARAM_DETECT_SENSITIVITY_VALUE));
+                            DataPreference.setVideoRecordingEnable(config.getString(Config.PARAM_VIDEO_ON_OFF_VALUE));
+                            DataPreference.setSecureDisplayEnable(config.getString(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE));
+                            sendBroadcast(new Intent(Config.BROADCAST_CHANGE_SECURE_OPTION));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                     }
 
@@ -942,11 +1242,11 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             }
             remoteViewTimestemp = mRemoteView.checkVideoView();
         }
-        if (checkBuffferDataCount > 2) {
+        if (checkBuffferDataCount > 3) {
             finish();
             return;
         }
-        mCheckBufferHandler.postDelayed(mCheckBufferRunnable, 4000);
+        mCheckBufferHandler.postDelayed(mCheckBufferRunnable, 5000);
     }
 
     private Runnable mCheckBufferRunnable = new Runnable() {
@@ -985,17 +1285,13 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_photo_save:
-                saveBitmapToFileCache(CameraActivity.this, mRemoteView.getView().getBitmap(), getSaveImageFileExternalDirectory(), getPictureFileName());
+                saveBitmapToFileCache(CameraActivity.this, mRemoteView.getView().getBitmap(), Config.getSaveImageFileExternalDirectory(), getPictureFileName());
+                break;
+
+            case R.id.btn_back:
+                finish();
                 break;
         }
-    }
-
-    public static String getSaveImageFileExternalDirectory() {
-        File fileRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "Durian");
-        if (!fileRoot.exists()) {
-            fileRoot.mkdir();
-        }
-        return fileRoot.getPath() + File.separator;
     }
 
     public String getPictureFileName() {
@@ -1036,29 +1332,6 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture texture, int i, int i1) {
         Logger.d(TAG, "onSurfaceTextureAvailable call ");
-//        assert texture != null;
-//        Surface previewSurface = new Surface(texture);
-//
-//        MediaRecorder mMediaRecorder = new MediaRecorder();
-//        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-//        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-//        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-//        mMediaRecorder.setOutputFile(getVideoFilePath());
-//        mMediaRecorder.setVideoEncodingBitRate(10000000);
-//        mMediaRecorder.setVideoFrameRate(30);
-//        mMediaRecorder.setVideoSize(640, 360);
-//        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-//        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-//        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-////        mMediaRecorder.setOrientationHint();
-//        try {
-//            mMediaRecorder.prepare();
-//        }catch (IOException e){
-//            e.printStackTrace();
-//        }
-//        List<Surface> surfaces = new ArrayList<>();
-//        Surface mRecorderSurface = mMediaRecorder.getSurface();
-//        surfaces.add(mRecorderSurface);
     }
 
     @Override

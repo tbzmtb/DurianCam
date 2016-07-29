@@ -1,5 +1,6 @@
 package org.opencv.android;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -8,6 +9,7 @@ import android.hardware.Camera.PreviewCallback;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
@@ -211,13 +213,20 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     }
 
     public synchronized void releaseCamera() {
-        Log.d(TAG,"releaseCamera call");
+        Log.d(TAG, "releaseCamera call");
 
-        if (mCamera != null) {
-            mCamera.stopPreview();
-            mCamera.setPreviewCallback(null);
-            mCamera.release();
-            mCamera = null;
+        try {
+            if (mCamera != null) {
+                mCamera.stopPreview();
+                mCamera.setPreviewCallback(null);
+                mCamera.release();
+
+                mCamera = null;
+            }
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         if (mFrameChain != null) {
             mFrameChain[0].release();
@@ -284,13 +293,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     mCamera.stopPreview();
                     mCamera.setPreviewCallback(null);
                     mCamera.release();
-
                     Log.d(TAG, "RE Connecting to camera");
-//                    try {
-//                        Thread.sleep(1500);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
                     if (!initializeCamera(mWidth, mHeight)) {
                         Log.d(TAG, "initializeCamera fail");
                         return;
@@ -374,6 +377,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
             } while (!mStopThread);
         }
     }
+
     public void beginRecording
             (Context con, String output_file, int recording_time /*sec*/) {
         mRecordingPath = output_file;
@@ -442,7 +446,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                 mRecorder.reset();
                 mRecorder.release();
                 mRecorder = null;
-                System.gc();
+//                System.gc();
 
             } catch (IllegalStateException e) {
                 e.printStackTrace();

@@ -53,5 +53,5 @@ dependencies {
 //    compile 'com.google.android.gms:play-services:8.3.0'
     //    compile 'io.openwebrtc:openwebrtc-android-sdk:0.1.0'
     compile 'com.google.android.gms:play-services-ads:9.2.1'
-    //    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+    compile 'com.google.android.gms:play-services-gcm:9.2.1'
 }

@@ -11,4 +11,38 @@
         android:layout_centerInParent="true"
         opencv:camera_id="98"
         opencv:show_fps="false" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/overlay_main_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textColor="#ffffff"
+                android:textSize="40sp" />
+
+            <TextView
+                android:id="@+id/overlay_sub_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:textColor="#00ffff"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:id="@+id/secure_dim_view"></RelativeLayout>
 </RelativeLayout>

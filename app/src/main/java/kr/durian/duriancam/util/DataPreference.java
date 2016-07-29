@@ -17,6 +17,66 @@ public class DataPreference {
         }
     }
 
+    public static void setPushToken(String token){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putString(Config.PREF_PUSH_TOKEN_KEY, token);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
+    public static void setPushEnable(boolean enable){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putBoolean(Config.PREF_PUSH_ENABLE_KEY, enable);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
+    public static void setVideoRecordingEnable(String value){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putString(Config.PREF_VIDEO_RECORDING_ENABLE_KEY, value);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
+    public static void setSecureDisplayEnable(String value){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putString(Config.PREF_DISPLAY_HIDE_KEY, value);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
+    public static void setDetectSensitivity(String value){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putString(Config.PREF_DETECT_SENSITIVITY_KEY, value);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
+    public static void setSecuringMode(boolean value){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putBoolean(Config.PREF_IS_SECURING_MODE, value);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
     public static void setLoginEmail(String value) {
         if (PREF != null) {
             SharedPreferences.Editor editor = PREF.edit();
@@ -151,7 +211,7 @@ public class DataPreference {
     }
 
     public static boolean getEasyLogin() {
-        return PREF != null ? PREF.getBoolean(Config.PREF_EASY_LOGIN_KEY, true) : true;
+        return PREF != null ? PREF.getBoolean(Config.PREF_EASY_LOGIN_KEY, false) : false;
     }
 
     public static boolean getKeepSceenOn(){
@@ -172,5 +232,32 @@ public class DataPreference {
 
     public static String getOfferSendAckData(){
         return PREF != null ? PREF.getString(Config.PREF_OFFER_SEND_ACK_DATA, null) : null;
+    }
+
+    public static boolean getSecuringMode(){
+        return PREF != null ? PREF.getBoolean(Config.PREF_IS_SECURING_MODE, false) : false;
+    }
+
+    public static String getVideoRecordingEnable(){
+        return PREF != null ? PREF.getString(Config.PREF_VIDEO_RECORDING_ENABLE_KEY, Config.VIDEO_RECORDING_DEFAULT_VALUE) : Config.VIDEO_RECORDING_DEFAULT_VALUE;
+    }
+
+    public static String getDetectSensitivity(){
+        return PREF != null ? PREF.getString(Config.PREF_DETECT_SENSITIVITY_KEY, Config.VIDEO_DETECT_SENSITIVITY_DEFAULT_VALUE) : Config.VIDEO_DETECT_SENSITIVITY_DEFAULT_VALUE;
+
+    }
+
+    public static String getSecureDisplayEnable(){
+        return PREF != null ? PREF.getString(Config.PREF_DISPLAY_HIDE_KEY, Config.DISPLAY_HIDE_DEFAULT_VALUE) : Config.DISPLAY_HIDE_DEFAULT_VALUE;
+
+    }
+
+    public static boolean getPushEnable(){
+        return PREF != null ? PREF.getBoolean(Config.PREF_PUSH_ENABLE_KEY, true) : true;
+
+    }
+
+    public static String getPushToken(){
+        return PREF != null ? PREF.getString(Config.PREF_PUSH_TOKEN_KEY, null) : null;
     }
 }

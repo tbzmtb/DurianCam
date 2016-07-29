@@ -27,6 +27,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     private Switch mLoginSwitch;
     private Switch mScreenOnOffSwitch;
     private TextView mVersionText;
+    private Switch mMotionDetectPushOnOffSwitch;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +40,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         mLoginSwitch.setOnCheckedChangeListener(onCheckChange);
         mScreenOnOffSwitch = (Switch)findViewById(R.id.screen_on_off_switch);
         mScreenOnOffSwitch.setOnCheckedChangeListener(onScreenSwitchCheckChange);
+        mMotionDetectPushOnOffSwitch = (Switch)findViewById(R.id.push_on_off_switch);
+        mMotionDetectPushOnOffSwitch.setOnCheckedChangeListener(onPushSwitchCheckChange);
         mVersionText = (TextView)findViewById(R.id.app_version);
         mVersionText.setText(getVersionName());
     }
@@ -59,6 +62,14 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             DataPreference.setEasyLogin(isChecked);
+
+        }
+    };
+
+    CompoundButton.OnCheckedChangeListener onPushSwitchCheckChange = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            DataPreference.setPushEnable(isChecked);
 
         }
     };

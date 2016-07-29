@@ -6,30 +6,65 @@
     android:padding="@dimen/activity_vertical_margin"
     android:weightSum="3">
 
-
-    <ImageButton
-        android:id="@+id/btn_baby_talk"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@drawable/btn_selector"
-        android:src="@drawable/baby" />
+        android:layout_weight="1">
 
-    <ImageButton
-        android:id="@+id/btn_cctv"
+        <Button
+            android:id="@+id/btn_baby_talk"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/btn_selector"
+            android:drawableTop="@drawable/pet_talk"
+            android:text="@string/category_pet_talk"
+            android:textColor="#000000"
+            android:drawablePadding="-5dp"
+            style="@style/TextAppearance.AppCompat.Large"
+            android:textStyle="bold" />
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="15dp"
-        android:layout_weight="1"
-        android:background="@drawable/btn_selector"
-        android:src="@drawable/camera_cctv" />
+        android:layout_weight="1">
 
-    <ImageButton
-        android:id="@+id/btn_secure"
+        <Button
+            android:id="@+id/btn_cctv"
+            android:paddingTop="10dp"
+            style="@style/TextAppearance.AppCompat.Large"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/btn_selector"
+            android:drawableTop="@drawable/camera_cctv"
+            android:drawablePadding="-24dp"
+            android:text="@string/category_cctv"
+            android:textColor="#000000"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="15dp"
-        android:layout_weight="1"
-        android:background="@drawable/btn_selector"
-        android:src="@drawable/motion_detection" />
+        android:layout_weight="1">
+
+        <Button
+            android:id="@+id/btn_secure"
+            style="@style/TextAppearance.AppCompat.Large"
+            android:paddingTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/btn_selector"
+            android:drawableTop="@drawable/motion_detection"
+            android:text="@string/category_motion_detect"
+            android:textColor="#000000"
+            android:drawablePadding="-5dp"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
 </LinearLayout>

@@ -18,6 +18,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -48,9 +49,9 @@ import kr.durian.duriancam.util.Logger;
 public class ViewerModeSelectActivity extends AppCompatActivity implements View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
     private IDataService mService;
     private final String TAG = getClass().getName();
-    private ImageButton mBabyButton;
-    private ImageButton mCctvButton;
-    private ImageButton mSecureButton;
+    private Button mBabyButton;
+    private Button mCctvButton;
+    private Button mSecureButton;
     private GoogleApiClient mGoogleApiClient;
     private final int RC_SIGN_IN = 0;
     private DataHandler mHandler;
@@ -63,13 +64,13 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
         mHandler = new DataHandler();
 
         Logger.d(TAG, "ViewerModeSelectActivity onCreate call");
-        mBabyButton = (ImageButton) findViewById(R.id.btn_baby_talk);
+        mBabyButton = (Button) findViewById(R.id.btn_baby_talk);
         mBabyButton.setOnClickListener(this);
 
-        mCctvButton = (ImageButton) findViewById(R.id.btn_cctv);
+        mCctvButton = (Button) findViewById(R.id.btn_cctv);
         mCctvButton.setOnClickListener(this);
 
-        mSecureButton = (ImageButton) findViewById(R.id.btn_secure);
+        mSecureButton = (Button) findViewById(R.id.btn_secure);
         mSecureButton.setOnClickListener(this);
         if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -222,8 +223,8 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
             String uuid = Build.SERIAL;
             String serial_no = Build.SERIAL;
             String password = "";
-            String master_rtcid = "";
-            String cert_master = "";
+            String pushToken = DataPreference.getPushToken();
+            String payment = "0";
             String email = emailString;
             String cert_email = "";
             String name = displayName;
@@ -231,8 +232,8 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
 
             cancelProgress();
 
-            new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, master_rtcid,
-                    cert_master, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, pushToken,
+                    payment, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         } else {
             cancelProgress();
