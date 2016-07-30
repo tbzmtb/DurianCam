@@ -28,10 +28,10 @@ public class SendPushAsyncTask extends AsyncTask<String, String, String> {
     public String title;
     public String message;
 
-    public SendPushAsyncTask(Context context, String title, String message, List<String> ids) {
+    public SendPushAsyncTask(Context context, String title, String imageDate, List<String> ids) {
         mContext = context;
         this.title = title;
-        this.message = message;
+        this.message = imageDate;
         this.ids = ids;
 
     }
@@ -56,7 +56,7 @@ public class SendPushAsyncTask extends AsyncTask<String, String, String> {
 
             json.put("collapse_key", "score_update");
             json.put("time_to_live", 108);
-            json.put("delay_while_idle", true);
+            json.put("delay_while_idle", false);
 
             URL url = new URL("https://android.googleapis.com/gcm/send");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

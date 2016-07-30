@@ -2,6 +2,8 @@ package kr.durian.duriancam.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -42,6 +44,8 @@ import java.util.List;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.asynctask.GetDeviceTokenTask;
+import kr.durian.duriancam.provider.CamProvider;
+import kr.durian.duriancam.provider.CamSQLiteHelper;
 import kr.durian.duriancam.service.DataService;
 import kr.durian.duriancam.service.IDataService;
 import kr.durian.duriancam.util.Config;
@@ -100,10 +104,10 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
 
     }
 
-    private void setDimLayout(){
-        if(DataPreference.getSecureDisplayEnable().equals(Config.DISPLAY_HIDE_ON)){
+    private void setDimLayout() {
+        if (DataPreference.getSecureDisplayEnable().equals(Config.DISPLAY_HIDE_ON)) {
             mDimLayout.setVisibility(View.VISIBLE);
-        }else{
+        } else {
             mDimLayout.setVisibility(View.GONE);
         }
 
@@ -153,7 +157,14 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
         Logger.d(TAG, "mContours.size = " + mContours.size());
         if (mSecureStartCount == START_TIME) {
             if (mContours.size() > getDetectSensitivityValue()) {
-                if (getPreviousData() > 0 && getPrePreviousData() > 0) {
+                if (getDetectSensitivityValue() > 90) {
+                    if (getPreviousData() > 0 && getPrePreviousData() > 0) {
+                        mSecureStartCount = DEFAULT_TIME;
+                        Logger.d(TAG, "감지!!");
+                        startTextColorBlink();
+                        takePicture();
+                    }
+                } else {
                     mSecureStartCount = DEFAULT_TIME;
                     Logger.d(TAG, "감지!!");
                     startTextColorBlink();
@@ -415,25 +426,24 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
 
     private JavaCameraView.OnJavaCamViewListener onMediaListner = new JavaCameraView.OnJavaCamViewListener() {
         @Override
-        public void onPictureTaken(final String file, final String time, final String err) {
+        public void onPictureTaken(final String fileFullPathAndName, final String time, final String err) {
             if (err.equals("sdcard_error")) {
                 Logger.d(TAG, "sdcard_error == ");
                 finish();
                 return;
             }
-            if (file == null || file.equals("")) {
-                Logger.i(TAG, "file == " + file);
+            if (fileFullPathAndName == null || fileFullPathAndName.equals("")) {
+                Logger.i(TAG, "file == " + fileFullPathAndName);
                 finish();
                 return;
             }
-            Logger.i(TAG, "photo file == " + file);
+            Logger.i(TAG, "photo file == " + fileFullPathAndName);
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-//                    setData2Database(OuiBotPreferences.getLoginId(SecureActivity.this), file, String.valueOf(getCurrentMode()), time);
-                    new MediaScanner(SecureActivity.this, new File(file));
-                    new GetDeviceTokenTask(SecureActivity.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-//                    sendFile2Master(file, getCurrentMode(), time);
+                    setData2Database(DataPreference.getRtcid(), fileFullPathAndName, time);
+                    new MediaScanner(SecureActivity.this, new File(fileFullPathAndName));
+                    new GetDeviceTokenTask(SecureActivity.this, time).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
             }).start();
             if (mRecordingEnable.equals(Config.VIDEO_RECORDING_ON)) {
@@ -473,6 +483,20 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
             finish();
         }
     };
+
+    private void setData2Database(String rtcid, String path, String date) {
+        try {
+            ContentValues values = new ContentValues();
+            values.put(CamSQLiteHelper.COL_RTCID, rtcid);
+            values.put(CamSQLiteHelper.COL_FILE_PATH, path);
+            values.put(CamSQLiteHelper.COL_DATE, date);
+            values.put(CamSQLiteHelper.COL_MODE, String.valueOf(DataPreference.getMode()));
+            ContentResolver resolver = getContentResolver();
+            resolver.insert(CamProvider.MOTION_IMAGE_TABLE_URI, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private String getVideoFileName(long time) {
         Date now = new Date(time);

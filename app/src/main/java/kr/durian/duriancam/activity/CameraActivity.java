@@ -2,11 +2,13 @@ package kr.durian.duriancam.activity;
 
 import android.app.ProgressDialog;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
@@ -17,6 +19,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.internal.view.menu.ExpandedMenuView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
@@ -26,7 +29,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.*;
@@ -55,6 +57,8 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import kr.durian.duriancam.R;
+import kr.durian.duriancam.provider.CamProvider;
+import kr.durian.duriancam.provider.CamSQLiteHelper;
 import kr.durian.duriancam.service.DataService;
 import kr.durian.duriancam.service.IDataService;
 import kr.durian.duriancam.service.IDataServiceCallback;
@@ -98,7 +102,6 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private RelativeLayout mBtnPhoto;
     private CheckBufferHandler mCheckBufferHandler;
     private RelativeLayout mSecureSettingView;
-    //    private TextView mFinishSecureMode;
     private Switch mMotionDetectModeOnOffSwitch;
     private Switch mDisplayOnOffSwitch;
     private SeekBar mDetectSensitivity;
@@ -106,7 +109,8 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private long backKeyPressedTime;
     private ImageButton mSecureSettingBack;
     private Toast toast;
-
+//    private final int CHECK_DELAY_COUNT = 60000 * 30;
+private final int CHECK_DELAY_COUNT = 5000;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -216,7 +220,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         }
     }
 
-    private void setMotionDetectModeEnable(String value){
+    private void setMotionDetectModeEnable(String value) {
         if (value == null) {
             return;
         }
@@ -227,7 +231,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         }
     }
 
-    private void setSecureDisplayEnalbe(String value){
+    private void setSecureDisplayEnalbe(String value) {
         if (value == null) {
             return;
         }
@@ -403,11 +407,10 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
 
     public void callCheckHandler() {
         if (mCheckHandler != null) {
-            mCheckHandler.postDelayed(mCheckRunnable, 60000 * 30);
+            mCheckHandler.postDelayed(mCheckRunnable, CHECK_DELAY_COUNT);
 
         }
     }
-
     private class CheckHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -660,7 +663,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                 kobj.put(Config.PARAM_VIDEO_ON_OFF_VALUE, DataPreference.getVideoRecordingEnable());
                 kobj.put(Config.PARAM_DETECT_SENSITIVITY_VALUE, DataPreference.getDetectSensitivity());
                 kobj.put(Config.PARAM_DETECT_DISPLAY_ON_OFF_VALUE, DataPreference.getSecureDisplayEnable());
-                kobj.put(Config.PARAM_DETECT_MODE_ON_OFF_VALUE, getStringOnOffValue(DataPreference.getSecuringMode()));
+                kobj.put(Config.PARAM_DETECT_MODE_ON_OFF_VALUE, Config.MOTION_DETECT_MODE_ON);
                 data.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
                 data.put(Config.PARAM_FROM, json.getString(Config.PARAM_TO));
                 data.put(Config.PARAM_TO, json.getString(Config.PARAM_FROM));
@@ -673,14 +676,6 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
-        }
-    }
-
-    private String getStringOnOffValue(boolean enable){
-        if(enable){
-            return Config.MOTION_DETECT_MODE_ON;
-        }else{
-            return Config.MOTION_DETECT_MODE_OFF;
         }
     }
 
@@ -1142,6 +1137,21 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+                    } else if (description.equals(Config.PARAM_SECURE_IMAGE_REQUEST)) {
+                        if (DataPreference.getMode() != Config.MODE_VIEWER) {
+                            JSONObject config = json.getJSONObject(Config.PARAM_CONFIG);
+                            String time = config.getString(Config.PARAM_IMAGE_TIME_KEY);
+                            String path = getDetectImageFileFromDatabase(config.getString(Config.PARAM_IMAGE_TIME_KEY));
+                            Logger.d(TAG, "path " + path);
+                            Logger.d(TAG, "time " + time);
+                            if (path == null) {
+                                return;
+                            }
+                            String sendData = makeJsonDataWithDetectImageFileAndInfo(path, time);
+                            if (sendData != null) {
+                                mService.sendData(sendData);
+                            }
+                        }
                     }
 
                 } catch (JSONException e) {
@@ -1168,6 +1178,52 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             }
         }
     };
+
+    private String makeJsonDataWithDetectImageFileAndInfo(String fileFullPath, String time) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put(Config.PARAM_TYPE, Config.PARAM_EVENT);
+            json.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
+            json.put(Config.PARAM_FROM, DataPreference.getRtcid());
+            json.put(Config.PARAM_TO, DataPreference.getPeerRtcid());
+            json.put(Config.PARAM_FILE_PATH, fileFullPath);
+            json.put(Config.PARAM_DESCRIPTION, Config.PARAM_SECURE_IMAGE_REQUEST);
+            json.put(Config.PARAM_TIME, time);
+            File file = new File(fileFullPath);
+            JSONObject json2 = new JSONObject();
+            if (file.exists()) {
+                String data = Config.getByteStringForSecureImage(new File(fileFullPath));
+                json2.put(Config.PARAM_IMAGE_CUT, data);
+            }
+            json.put(Config.PARAM_EVENT, json2);
+            return json.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private String getDetectImageFileFromDatabase(String time) {
+        String path = null;
+        ContentResolver resolver = getContentResolver();
+        Cursor c = resolver.query(CamProvider.MOTION_IMAGE_TABLE_URI, new String[]{CamSQLiteHelper.COL_FILE_PATH},
+                CamSQLiteHelper.COL_DATE + " = ? ", new String[]{time}, CamSQLiteHelper.COL_DATE + " desc");
+        if (c != null && c.moveToFirst()) {
+            try {
+                do {
+                    path = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_FILE_PATH));
+
+                } while (c.moveToNext());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                c.close();
+            }
+        }
+        return path;
+    }
 
     @Override
     public void onLocalDescription(SessionDescription localDescription) {

@@ -30,4 +30,5 @@
     <string name="detect_notice">모션감지알림</string>
     <string name="detect_detail_notice">모션이 감지 되었습니다.</string>
     <string name="dispay_wall_on_off">카메라 화면 숨기기</string>
+    <string name="show_detected_image">모션 감지 이미지</string>
 </resources>

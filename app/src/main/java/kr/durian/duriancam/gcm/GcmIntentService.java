@@ -7,15 +7,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import kr.durian.duriancam.R;
-import kr.durian.duriancam.activity.IntroActivity;
-import kr.durian.duriancam.activity.MainActivity;
+import kr.durian.duriancam.activity.NotificationActivity;
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.DataPreference;
 import kr.durian.duriancam.util.Logger;
@@ -43,8 +41,7 @@ public class GcmIntentService extends IntentService {
         String messageType = gcm.getMessageType(intent);
 
         String title = extras.getString(TITLE);
-        String message = extras.getString(MESSAGE);
-
+        String imageTime = extras.getString(MESSAGE);
 
         if (!extras.isEmpty()) {
             if (GoogleCloudMessaging.
@@ -52,7 +49,7 @@ public class GcmIntentService extends IntentService {
                 Logger.d(TAG, "Received: " + extras.toString());
 
                 if (DataPreference.getPushEnable()) {
-                    sendNotification(title, message);
+                    sendNotification(getString(R.string.detect_notice), getString(R.string.detect_detail_notice), imageTime);
 
                 }
             }
@@ -60,24 +57,25 @@ public class GcmIntentService extends IntentService {
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
-    private void sendNotification(String title, String message) {
+    private void sendNotification(String title, String message, String imageTime) {
 
 
         mNotificationManager = (NotificationManager)
                 getSystemService(Context.NOTIFICATION_SERVICE);
-
+        Intent intent = new Intent(this, NotificationActivity.class);
+        intent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, imageTime);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, IntroActivity.class), 0);
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
-                                .setContentTitle(title)
-                                .setAutoCancel(true)
-                                .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_LIGHTS)
-                                .setContentText(message)
-                                .setPriority(Notification.PRIORITY_MAX);
+                        .setContentTitle(title)
+                        .setAutoCancel(true)
+                        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_LIGHTS)
+                        .setContentText(message)
+                        .setPriority(Notification.PRIORITY_MAX);
         mBuilder.setContentIntent(contentIntent);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }

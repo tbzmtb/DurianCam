@@ -26,9 +26,11 @@ import kr.durian.duriancam.util.Logger;
 public class GetDeviceTokenTask extends AsyncTask<String, Void, String> {
     private final String TAG = getClass().getName();
     private Context mContext;
+    private String mImageDate;
 
-    public GetDeviceTokenTask(Context context) {
+    public GetDeviceTokenTask(Context context, String imageDate) {
         mContext = context;
+        mImageDate = imageDate;
     }
 
     @Override

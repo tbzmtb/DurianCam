@@ -14,12 +14,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
@@ -56,13 +56,14 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
     private final int RC_SIGN_IN = 0;
     private DataHandler mHandler;
     private ProgressDialog mProgressDialog;
+    private String mPushImageTime = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_mode_select);
+        DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
         mHandler = new DataHandler();
-
         Logger.d(TAG, "ViewerModeSelectActivity onCreate call");
         mBabyButton = (Button) findViewById(R.id.btn_baby_talk);
         mBabyButton.setOnClickListener(this);
@@ -84,8 +85,9 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                     .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                     .build();
         }
+        bindService(new Intent(this,
+                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
-
     private void connectWebSocket() {
         if (mService != null) {
             try {
@@ -286,12 +288,13 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                     if (!json.isNull(Config.PARAM_DESCRIPTION)) {
                         String desciption = json.getString(Config.PARAM_DESCRIPTION);
                         if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
-                            Intent intent = new Intent(ViewerModeSelectActivity.this, CameraActivity.class);
-                            startActivity(intent);
+                            startCameraActivity();
+                        }else{
+                            //nothing to do
                         }
                     } else {
-                        Intent intent = new Intent(ViewerModeSelectActivity.this, CameraActivity.class);
-                        startActivity(intent);
+                        startCameraActivity();
+
                     }
 
                 } catch (JSONException e) {
@@ -300,6 +303,18 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
             }
         }
     };
+
+    private void startCameraActivity() {
+        if (mPushImageTime == null) {
+            Intent intent = new Intent(ViewerModeSelectActivity.this, CameraActivity.class);
+            startActivity(intent);
+        }else{
+            Intent intent = new Intent(ViewerModeSelectActivity.this, ShowDetectedImageActivity.class);
+            intent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, mPushImageTime);
+            startActivity(intent);
+            mPushImageTime = null;
+        }
+    }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -326,19 +341,19 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
-        bindService(new Intent(this,
-                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unbindService(mConnection);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        unbindService(mConnection);
+
     }
 
     private void AllButtonUnselected() {
@@ -394,6 +409,11 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                 try {
                     mService.registerCallback(mCallbcak);
                     setDefaultMode();
+                    mPushImageTime = getIntent().getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
+                    if (mPushImageTime != null) {
+                        DataPreference.setMode(Config.MODE_VIEWER);
+                        signIn();
+                    }
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

@@ -1,9 +1,11 @@
 package kr.durian.duriancam.activity;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -40,6 +42,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.javascript.tools.debugger.Main;
 
 import java.io.IOException;
 
@@ -371,8 +374,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String cert_email = "";
             String name = "김선영";
             String disable = "0";
-            Logger.d(TAG,"pushToken = "+pushToken);
-            Logger.d(TAG,"pushToken = "+regid);
+            Logger.d(TAG, "pushToken = " + pushToken);
+            Logger.d(TAG, "pushToken = " + regid);
             new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, pushToken,
                     payment, email, cert_email, name, disable).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
@@ -478,8 +481,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String cert_email = "";
             String name = displayName;
             String disable = "0";
-            Logger.d(TAG,"pushToken = "+pushToken);
-            Logger.d(TAG,"pushToken = "+regid);
+            Logger.d(TAG, "pushToken = " + pushToken);
+            Logger.d(TAG, "pushToken = " + regid);
             cancelProgress();
 
             new InsertUserInfoTask(this, mHandler, DataPreference.getRtcid(), type, uuid, serial_no, password, pushToken,

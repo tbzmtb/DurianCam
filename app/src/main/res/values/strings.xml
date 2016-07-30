@@ -24,9 +24,10 @@
     <string name="category_pet_talk">Pet talk</string>
     <string name="category_cctv">CCTV</string>
     <string name="category_motion_detect">Motion Detection</string>
-    <string name="secure_mode_text">Motion Detection</string>
+    <string name="secure_mode_text">Motion Detecting</string>
     <string name="ready_to_detect_mode">Ready to motion detect.</string>
     <string name="detect_notice">Notice</string>
-    <string name="detect_detail_notice">Motion is detected</string>
+    <string name="detect_detail_notice">Motion has been detected</string>
     <string name="dispay_wall_on_off">Hiding camera display </string>
+    <string name="show_detected_image">Motion detected Data</string>"
 </resources>

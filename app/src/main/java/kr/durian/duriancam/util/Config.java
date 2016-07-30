@@ -3,12 +3,16 @@ package kr.durian.duriancam.util;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.WindowManager;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -29,8 +33,13 @@ public class Config {
     public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
     public static final String GET_PUSH_TOKEN_PHP = "get_push_token_post.php";
 
+    public static final String PUSH_IMAGE_TIME_INTENT_KEY = "push_image_time_key";
+
     public static final String PARAM_RTCID = "rtcid";
     public static final String PARAM_TYPE = "type";
+    public static final String PARAM_IMAGE_CUT = "imgcut";
+    public static final String PARAM_EVENT = "event";
+    public static final String PARAM_IMAGE_TIME_KEY = "image_time_key";
     public static final String PARAM_VIDEO_ON_OFF_VALUE = "video_on_off";
     public static final String PARAM_DETECT_SENSITIVITY_VALUE = "detect_sensitivity";
     public static final String PARAM_DETECT_DISPLAY_ON_OFF_VALUE = "display_hide_value";
@@ -125,13 +134,16 @@ public class Config {
     public static final String PARAM_HANGUP_ACK = "hangup_ack";
     public static final String PARAM_ANSWER_ACK = "answer_ack";
     public static final String PARAM_TO = "to";
+    public static final String PARAM_FILE_PATH = "imagepath";
+    public static final String PARAM_TIME = "time";
     public static final String PARAM_MODE = "mode";
     public static final String PARAM_LOGIN_ACK = "login_ack";
     public static final String PARAM_CODE = "code";
     public static final String PARAM_SUCCESS_CODE = "100";
     public static final String PARAM_SUCCESS_DESCRIPTION = "success";
     public static final String PARAM_CHECK_CAMERA_PEER_EXIST = "check_camera_peer_exist";
-    public static final String PARAM_CHECK_CAMERA_PEER_EXIST_FOR_SECURE = "check_camera_perr_exist_for_secure";
+    public static final String PARAM_SECURE_IMAGE_REQUEST = "secure_image_request";
+    public static final String PARAM_CHECK_CAMERA_PEER_EXIST_FOR_SECURE = "check_camera_peer_exist_for_secure";
     public static final String PARAM_SECURE_CHANGE_OPTION = "secure_change_option";
     public static final String PARAM_PEER_IS_CALLING = "Peer is calling";
     public static final String PARAM_PEER_IS_SECURING = "Peer is securing";
@@ -144,7 +156,7 @@ public class Config {
     public static final String PARAM_GET_CONFIG_ACK = "getconfig_ack";
     public static final String IMAGE_FILE_EXTENTION = ".jpg";
     public static final String VIDEO_FILE_EXTENTION = ".3gp";
-
+    public static final String TOUCH_PUSH_NOTIFICATION_WHEN_APP_RUNNING  ="touch_push_notification_when_app_running";
     public static String getSaveImageFileExternalDirectory() {
         File fileRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "DurianCam");
         if (!fileRoot.exists()) {
@@ -171,6 +183,17 @@ public class Config {
 
     public static String getDate() {
         return new SimpleDateFormat("yyyyMMdd").format(new Date(System.currentTimeMillis()));
+    }
+
+    public static String getByteStringForSecureImage(File file) {
+        return Base64.encodeToString(getBytesFromBitmap(BitmapFactory.decodeFile(file.getPath())),
+                Base64.NO_WRAP);
+    }
+
+    public static byte[] getBytesFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+        return stream.toByteArray();
     }
 
     public static String getAppVersionName(Context context) {
