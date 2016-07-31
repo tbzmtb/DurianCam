@@ -18,15 +18,18 @@ public class CamSQLiteHelper extends SQLiteOpenHelper {
     public static final String COL_INEDEX = "_id";
     public static final String COL_RTCID = "rtcid";
     public static final String COL_DATE = "date";
-    public static final String COL_MODE = "mode";
+    public static final String COL_VIEWR_OR_CAMERA_MODE = "mode";
     public static final String COL_FILE_PATH = "path";
+    public static final String COL_DELETE_VALUE = "delete_value";
+    public static final String[] TABLE_SECURE_ALL_COLUMNS = {COL_INEDEX, COL_RTCID, COL_DATE, COL_VIEWR_OR_CAMERA_MODE, COL_FILE_PATH, COL_DELETE_VALUE};
 
     private static final String DATABASE_CREATE_PARKING_LIST = "create table "
             + TABLE_MOTION_IMAGE_LIST + "(" + COL_INEDEX
             + " integer primary key autoincrement, "
             + COL_RTCID + " text not null , "
             + COL_DATE + " text not null , "
-            + COL_MODE + " text not null , "
+            + COL_VIEWR_OR_CAMERA_MODE + " text not null , "
+            + COL_DELETE_VALUE + " text not null , "
             + COL_FILE_PATH + " text not null );";
 
 

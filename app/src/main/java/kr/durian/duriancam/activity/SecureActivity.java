@@ -390,30 +390,6 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
         }
     }
 
-//    private void registerServiceCallback() {
-//        try {
-//            mService.registerCallback(mCallbcak);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    private void unregisterServiceCallback() {
-//        try {
-//            boolean b = mService.unregisterCallback(mCallbcak);
-//            Logger.d(TAG, "unregisterCallback1 call = ", b);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    final IDataServiceCallback mCallbcak = new IDataServiceCallback.Stub() {
-//        @Override
-//        public void valueChanged(int what, String data) throws RemoteException {
-//
-//        }
-//    };
-
     private void initCamera() {
         Logger.i(TAG, "initCamera mOpenCVCameraView = " + mOpenCVCameraView);
         if (mOpenCVCameraView == null) {
@@ -490,7 +466,7 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
             values.put(CamSQLiteHelper.COL_RTCID, rtcid);
             values.put(CamSQLiteHelper.COL_FILE_PATH, path);
             values.put(CamSQLiteHelper.COL_DATE, date);
-            values.put(CamSQLiteHelper.COL_MODE, String.valueOf(DataPreference.getMode()));
+            values.put(CamSQLiteHelper.COL_VIEWR_OR_CAMERA_MODE, String.valueOf(DataPreference.getMode()));
             ContentResolver resolver = getContentResolver();
             resolver.insert(CamProvider.MOTION_IMAGE_TABLE_URI, values);
         } catch (Exception e) {
@@ -527,7 +503,7 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
                             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
                         }
                     }
-                }, 5000);
+                }, 2000);
 
 
             }

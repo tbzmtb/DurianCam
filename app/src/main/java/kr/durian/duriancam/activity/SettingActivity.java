@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -22,6 +23,7 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,6 +53,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_setting);
         DataPreference.PREF = PreferenceManager.getDefaultSharedPreferences(this);
         mBtnBack = (ImageButton) findViewById(R.id.btn_back);
@@ -86,6 +89,11 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onPause() {
         super.onPause();
+        try {
+            mService.unregisterCallback(mCallbcak);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         unbindService(mConnection);
     }
 
@@ -106,14 +114,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
-            if (mService != null) {
-                try {
-                    mService.unregisterCallback(mCallbcak);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
+            mService = null;
         }
     };
     final IDataServiceCallback mCallbcak = new IDataServiceCallback.Stub() {

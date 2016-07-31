@@ -35,6 +35,12 @@ public class Config {
 
     public static final String PUSH_IMAGE_TIME_INTENT_KEY = "push_image_time_key";
 
+    public static final int NONE_SELECT = 0;
+    public static final int SELECT = 1;
+
+    public static final int NONE_DELETE = 0;
+    public static final int DELETE = 1;
+
     public static final String PARAM_RTCID = "rtcid";
     public static final String PARAM_TYPE = "type";
     public static final String PARAM_IMAGE_CUT = "imgcut";
@@ -58,6 +64,7 @@ public class Config {
     public static final String PARAM_DISABLE = "disable";
     public static final String PARAM_TOKEN = "token";
     public static final String PARAM_CHECK = "check";
+    public static final String PARAM_SIZE = "size";
     public static final String PARAM_FINISH_SECURE = "finish_secure";
     public static final String SERVER_PARAM_VERSION = "version";
     public static final String SERVER_PARAM_DEVICE_TYPE = "devicetype";
@@ -124,6 +131,7 @@ public class Config {
     public static final int HANDLER_MODE_CONFIG_ACK = 10006;
     public static final int HANDLER_MODE_HANGUP = 10007;
     public static final int HANDLER_MODE_HANGUP_ACK = 10008;
+    public static final int HANDLER_MODE_EVENT = 10009;
 
     public static final String PARAM_SDP = "sdp";
     public static final String PARAM_SESSION_ID = "sessionid";
@@ -134,7 +142,7 @@ public class Config {
     public static final String PARAM_HANGUP_ACK = "hangup_ack";
     public static final String PARAM_ANSWER_ACK = "answer_ack";
     public static final String PARAM_TO = "to";
-    public static final String PARAM_FILE_PATH = "imagepath";
+    public static final String PARAM_FILE_NAME = "imagepath";
     public static final String PARAM_TIME = "time";
     public static final String PARAM_MODE = "mode";
     public static final String PARAM_LOGIN_ACK = "login_ack";
@@ -144,6 +152,7 @@ public class Config {
     public static final String PARAM_CHECK_CAMERA_PEER_EXIST = "check_camera_peer_exist";
     public static final String PARAM_SECURE_IMAGE_REQUEST = "secure_image_request";
     public static final String PARAM_CHECK_CAMERA_PEER_EXIST_FOR_SECURE = "check_camera_peer_exist_for_secure";
+    public static final String PARAM_GET_TOTAL_SECURE_IMAGE_DATA = "get_total_secure_image_data";
     public static final String PARAM_SECURE_CHANGE_OPTION = "secure_change_option";
     public static final String PARAM_PEER_IS_CALLING = "Peer is calling";
     public static final String PARAM_PEER_IS_SECURING = "Peer is securing";
@@ -189,7 +198,14 @@ public class Config {
         return Base64.encodeToString(getBytesFromBitmap(BitmapFactory.decodeFile(file.getPath())),
                 Base64.NO_WRAP);
     }
-
+    public static String getFileName(String path) {
+        int count = path.split(File.separator).length;
+        String filename = "";
+        if (count > 1) {
+            filename = path.split(File.separator)[count - 1];
+        }
+        return filename;
+    }
     public static byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);

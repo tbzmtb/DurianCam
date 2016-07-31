@@ -197,6 +197,13 @@ public class DataService extends Service {
                             handler.sendMessage(msg);
                             break;
                         }
+                        case Config.PARAM_EVENT:{
+                            Message msg = Message.obtain();
+                            msg.what = Config.HANDLER_MODE_EVENT;
+                            msg.obj = message;
+                            handler.sendMessage(msg);
+                            break;
+                        }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

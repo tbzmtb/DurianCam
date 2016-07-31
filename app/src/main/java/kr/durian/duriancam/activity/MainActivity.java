@@ -287,31 +287,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
+    private void setRegisterCallback(){
+        try {
+            mService.registerCallback(mCallbcak);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void unRegisterCallback(){
+        if (mService != null) {
+            try {
+                mService.unregisterCallback(mCallbcak);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (service != null) {
                 mService = IDataService.Stub.asInterface(service);
-                try {
-                    mService.registerCallback(mCallbcak);
-                    setDefaultMode();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                setDefaultMode();
+
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            mService = null;
 
-            if (mService != null) {
-                try {
-                    mService.unregisterCallback(mCallbcak);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     };
 
@@ -510,6 +518,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void valueChanged(int value, String data) throws RemoteException {
+            unRegisterCallback();
+            Logger.d(TAG,"valueChanged call");
             if (value == Config.HANDLER_MODE_START) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -520,20 +530,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 Intent intent = new Intent(MainActivity.this, CameraActivity.class);
                                 startActivity(intent);
                             }
-//                            else{
-//                                Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
-//                                startActivity(intent);
-//                            }
                         }
                     } else {
                         if (DataPreference.getMode() == Config.MODE_CAMERA) {
                             Intent intent = new Intent(MainActivity.this, CameraActivity.class);
                             startActivity(intent);
                         }
-//                        else{
-//                            Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
-//                            startActivity(intent);
-//                        }
                     }
 
                 } catch (JSONException e) {
@@ -561,6 +563,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.sign_in_button:
+                setRegisterCallback();
                 if (DataPreference.getMode() == Config.MODE_VIEWER) {
                     Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
                     startActivity(intent);

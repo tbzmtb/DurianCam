@@ -31,4 +31,9 @@
     <string name="detect_detail_notice">모션이 감지 되었습니다.</string>
     <string name="dispay_wall_on_off">카메라 화면 숨기기</string>
     <string name="show_detected_image">모션 감지 이미지</string>
+    <string name="btn_delete">삭제</string>
+    <string name="btn_all_delete">전체 삭제</string>
+    <string name="confirm">확인</string>
+    <string name="cancel">취소</string>
+    <string name="really_want_to_delete">모든 이미지를 삭제 하시겠습니까?</string>
 </resources>

@@ -85,8 +85,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                     .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                     .build();
         }
-        bindService(new Intent(this,
-                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
+
     }
     private void connectWebSocket() {
         if (mService != null) {
@@ -282,6 +281,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
 
         @Override
         public void valueChanged(int value, String data) throws RemoteException {
+            Logger.d(TAG,"valueChanged call");
             if (value == Config.HANDLER_MODE_START) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -341,18 +341,28 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
+        bindService(new Intent(this,
+                DataService.class), mConnection, Context.BIND_AUTO_CREATE);
 
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        if (mService != null) {
+            try {
+                mService.unregisterCallback(mCallbcak);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+        unbindService(mConnection);
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mConnection);
 
     }
 
@@ -423,13 +433,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
         @Override
         public void onServiceDisconnected(ComponentName name) {
 
-            if (mService != null) {
-                try {
-                    mService.unregisterCallback(mCallbcak);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
+            mService = null;
         }
     };
 }

@@ -19,7 +19,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.internal.view.menu.ExpandedMenuView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
@@ -109,8 +108,9 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private long backKeyPressedTime;
     private ImageButton mSecureSettingBack;
     private Toast toast;
-//    private final int CHECK_DELAY_COUNT = 60000 * 30;
-private final int CHECK_DELAY_COUNT = 5000;
+    private final int CHECK_DELAY_COUNT = 60000 * 20;
+//    private final int CHECK_DELAY_COUNT = 5000;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -258,8 +258,11 @@ private final int CHECK_DELAY_COUNT = 5000;
         if (mAudioManager == null) {
             return;
         }
-        mAudioManager.setMicrophoneMute(mute);
-
+        try {
+            mAudioManager.setMicrophoneMute(mute);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setSpeakerSound(boolean enable) {
@@ -278,8 +281,15 @@ private final int CHECK_DELAY_COUNT = 5000;
     }
 
     private void setSpeakerPhone(boolean enable) {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setSpeakerphoneOn(enable);
+        Logger.d(TAG, "setSpeakerPhone call");
+        if (mAudioManager == null) {
+            return;
+        }
+        try {
+            mAudioManager.setSpeakerphoneOn(enable);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setWindowFrags() {
@@ -411,6 +421,7 @@ private final int CHECK_DELAY_COUNT = 5000;
 
         }
     }
+
     private class CheckHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -1141,7 +1152,7 @@ private final int CHECK_DELAY_COUNT = 5000;
                         if (DataPreference.getMode() != Config.MODE_VIEWER) {
                             JSONObject config = json.getJSONObject(Config.PARAM_CONFIG);
                             String time = config.getString(Config.PARAM_IMAGE_TIME_KEY);
-                            String path = getDetectImageFileFromDatabase(config.getString(Config.PARAM_IMAGE_TIME_KEY));
+                            String path = getDetectImageFilePathFromDatabase(config.getString(Config.PARAM_IMAGE_TIME_KEY));
                             Logger.d(TAG, "path " + path);
                             Logger.d(TAG, "time " + time);
                             if (path == null) {
@@ -1151,6 +1162,10 @@ private final int CHECK_DELAY_COUNT = 5000;
                             if (sendData != null) {
                                 mService.sendData(sendData);
                             }
+                        }
+                    } else if (description.equals(Config.PARAM_GET_TOTAL_SECURE_IMAGE_DATA)) {
+                        if (DataPreference.getMode() != Config.MODE_VIEWER) {
+                            sendTotalSecureImageData(json);
                         }
                     }
 
@@ -1179,20 +1194,62 @@ private final int CHECK_DELAY_COUNT = 5000;
         }
     };
 
-    private String makeJsonDataWithDetectImageFileAndInfo(String fileFullPath, String time) {
+    private void sendTotalSecureImageData(JSONObject json) {
+        try {
+            JSONObject jobj = new JSONObject();
+            JSONObject kobj = new JSONObject();
+
+            ContentResolver resolver = getContentResolver();
+            Cursor c = resolver.query(CamProvider.MOTION_IMAGE_TABLE_URI, CamSQLiteHelper.TABLE_SECURE_ALL_COLUMNS,
+                    CamSQLiteHelper.COL_RTCID + " = ? AND " + CamSQLiteHelper.COL_VIEWR_OR_CAMERA_MODE + " = ? ", new String[]{DataPreference.getRtcid(), String.valueOf(DataPreference.getMode())},
+                    CamSQLiteHelper.COL_DATE + " DESC");
+            if (c != null && c.moveToFirst()) {
+                try {
+                    kobj.put(Config.PARAM_SIZE, c.getCount());
+                    int num = 0;
+                    do {
+                        kobj.put(String.valueOf(num), c.getString(c.getColumnIndex(CamSQLiteHelper.COL_DATE)));
+                        num++;
+                        if (num == 100) {
+                            break;
+                        }
+                    } while (c.moveToNext());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    c.close();
+                }
+            }
+
+            jobj.put(Config.PARAM_TYPE, Config.PARAM_GET_CONFIG_ACK);
+            jobj.put(Config.PARAM_SESSION_ID, json.getString(Config.PARAM_SESSION_ID));
+            jobj.put(Config.PARAM_FROM, json.getString(Config.PARAM_TO));
+            jobj.put(Config.PARAM_TO, json.getString(Config.PARAM_FROM));
+            jobj.put(Config.PARAM_CODE, Config.PARAM_SUCCESS_CODE);
+            jobj.put(Config.PARAM_DESCRIPTION, Config.PARAM_GET_TOTAL_SECURE_IMAGE_DATA);
+            jobj.put(Config.PARAM_CONFIG, kobj);
+            mService.sendData(jobj.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String makeJsonDataWithDetectImageFileAndInfo(String path, String time) {
         JSONObject json = new JSONObject();
         try {
             json.put(Config.PARAM_TYPE, Config.PARAM_EVENT);
             json.put(Config.PARAM_SESSION_ID, System.currentTimeMillis());
             json.put(Config.PARAM_FROM, DataPreference.getRtcid());
             json.put(Config.PARAM_TO, DataPreference.getPeerRtcid());
-            json.put(Config.PARAM_FILE_PATH, fileFullPath);
+            json.put(Config.PARAM_FILE_NAME, Config.getFileName(path));
             json.put(Config.PARAM_DESCRIPTION, Config.PARAM_SECURE_IMAGE_REQUEST);
             json.put(Config.PARAM_TIME, time);
-            File file = new File(fileFullPath);
+            File file = new File(path);
             JSONObject json2 = new JSONObject();
             if (file.exists()) {
-                String data = Config.getByteStringForSecureImage(new File(fileFullPath));
+                String data = Config.getByteStringForSecureImage(new File(path));
                 json2.put(Config.PARAM_IMAGE_CUT, data);
             }
             json.put(Config.PARAM_EVENT, json2);
@@ -1205,7 +1262,7 @@ private final int CHECK_DELAY_COUNT = 5000;
         return null;
     }
 
-    private String getDetectImageFileFromDatabase(String time) {
+    private String getDetectImageFilePathFromDatabase(String time) {
         String path = null;
         ContentResolver resolver = getContentResolver();
         Cursor c = resolver.query(CamProvider.MOTION_IMAGE_TABLE_URI, new String[]{CamSQLiteHelper.COL_FILE_PATH},
@@ -1214,7 +1271,6 @@ private final int CHECK_DELAY_COUNT = 5000;
             try {
                 do {
                     path = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_FILE_PATH));
-
                 } while (c.moveToNext());
             } catch (Exception e) {
                 e.printStackTrace();
