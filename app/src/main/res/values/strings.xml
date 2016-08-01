@@ -27,13 +27,15 @@
     <string name="secure_mode_text">Motion Detecting</string>
     <string name="ready_to_detect_mode">Ready to motion detect.</string>
     <string name="detect_notice">Notice</string>
-    <string name="detect_detail_notice">Motion has been detected</string>
-    <string name="dispay_wall_on_off">Hiding camera display </string>
+    <string name="detect_detail_notice">Motion has been detected.</string>
+    <string name="dispay_wall_on_off">Hiding camera display</string>
     <string name="show_detected_image">Motion detected Data</string>
     <string name="btn_delete">Delete</string>
     <string name="btn_all_delete">Delete All</string>
     <string name="confirm">OK</string>
     <string name="cancel">cancel</string>
     <string name="really_want_to_delete">Do you really want to delete?</string>
-    <string name="you_need_to_check_available_memory">You need to check available memory</string>
+    <string name="you_need_to_check_available_memory">You need to check available memory.</string>
+    <string name="please_check_network_state">Please check your network state.</string>
+    <string name="not_supported_right_now">Coming soon</string>
 </resources>

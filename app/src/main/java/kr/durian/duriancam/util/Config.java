@@ -27,6 +27,8 @@ public class Config {
 
     public static final String INSERT_USER_INFO_PHP = "insert_user_info_post.php";
     public static final String GET_PUSH_TOKEN_PHP = "get_push_token_post.php";
+    public static final String GET_IN_APP_PAY_MENT_PHP = "get_in_app_pay_ment_post.php";
+    public static final String SET_IN_APP_PAY_MENT_PHP = "set_in_app_pay_ment_post.php";
 
     public static final String PUSH_IMAGE_TIME_INTENT_KEY = "push_image_time_key";
 
@@ -73,6 +75,7 @@ public class Config {
     public static final int INSERT_USER_INFO_HANDLER = DURIAN_CAM_DATA * 0x01;
 
     public static final String PREF_LOGIN_NAME_KEY = "login_name_key";
+    public static final String PREF_IN_APP_PAYMENT_KEY = "in_app_payment_key";
     public static final String PREF_PUSH_ENABLE_KEY = "push_enable_key";
     public static final String PREF_PUSH_TOKEN_KEY = "push_token_key";
     public static final String PREF_VIDEO_RECORDING_ENABLE_KEY = "video_recording_enable_key";
@@ -119,6 +122,8 @@ public class Config {
     public static final int HANDLER_MODE_HANGUP_ACK = 10008;
     public static final int HANDLER_MODE_EVENT = 10009;
 
+    public static final int SET_IN_APP_PAY_MENT_HANDLER_KEY = 5001;
+    public static final int GET_IN_APP_PAY_MENT_HANDLER_KEY = 5002;
     public static final String PARAM_SDP = "sdp";
     public static final String PARAM_SESSION_ID = "sessionid";
     public static final String PARAM_FROM = "from";

@@ -17,6 +17,16 @@ public class DataPreference {
         }
     }
 
+    public static void setInAppPayment(boolean isPay){
+        if (PREF != null) {
+            SharedPreferences.Editor editor = PREF.edit();
+            editor.putBoolean(Config.PREF_IN_APP_PAYMENT_KEY, isPay);
+            editor.commit();
+        } else {
+            Logger.d(TAG, "PREF == " + PREF);
+        }
+    }
+
     public static void setPushToken(String token){
         if (PREF != null) {
             SharedPreferences.Editor editor = PREF.edit();
@@ -259,5 +269,9 @@ public class DataPreference {
 
     public static String getPushToken(){
         return PREF != null ? PREF.getString(Config.PREF_PUSH_TOKEN_KEY, null) : null;
+    }
+
+    public static boolean getInAppPayment(){
+        return PREF != null ? PREF.getBoolean(Config.PREF_IN_APP_PAYMENT_KEY, false) : false;
     }
 }

@@ -13,14 +13,14 @@
 
         <Button
             android:id="@+id/btn_baby_talk"
+            style="@style/TextAppearance.AppCompat.Large"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/btn_selector"
+            android:drawablePadding="-5dp"
             android:drawableTop="@drawable/pet_talk"
             android:text="@string/category_pet_talk"
             android:textColor="#000000"
-            android:drawablePadding="-5dp"
-            style="@style/TextAppearance.AppCompat.Large"
             android:textStyle="bold" />
 
 
@@ -34,13 +34,13 @@
 
         <Button
             android:id="@+id/btn_cctv"
-            android:paddingTop="10dp"
             style="@style/TextAppearance.AppCompat.Large"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/btn_selector"
-            android:drawableTop="@drawable/camera_cctv"
             android:drawablePadding="-24dp"
+            android:drawableTop="@drawable/camera_cctv"
+            android:paddingTop="10dp"
             android:text="@string/category_cctv"
             android:textColor="#000000"
             android:textStyle="bold" />
@@ -56,15 +56,23 @@
         <Button
             android:id="@+id/btn_secure"
             style="@style/TextAppearance.AppCompat.Large"
-            android:paddingTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/btn_selector"
+            android:drawablePadding="-5dp"
             android:drawableTop="@drawable/motion_detection"
+            android:paddingTop="10dp"
             android:text="@string/category_motion_detect"
             android:textColor="#000000"
-            android:drawablePadding="-5dp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/detection_dim_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#52000000"
+            android:src="@null"
+            android:visibility="visible"/>
 
     </RelativeLayout>
 </LinearLayout>

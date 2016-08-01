@@ -724,7 +724,9 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
                 if (DataPreference.getMode() == Config.MODE_VIEWER) {
                     unCallHandler();
                     callHandler();
-                    startAd();
+                    if(!DataPreference.getInAppPayment()) {
+                        startAd();
+                    }
                 }
 
             }
@@ -1371,6 +1373,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
         }
         Logger.d(TAG, "checkBufferDataIfErrorThenFinish call " + checkBuffferDataCount);
         if (checkBuffferDataCount > 10) {
+            Toast.makeText(CameraActivity.this, getString(R.string.please_check_network_state),Toast.LENGTH_LONG).show();
             finish();
             return;
         }

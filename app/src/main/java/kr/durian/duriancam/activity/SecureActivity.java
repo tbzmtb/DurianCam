@@ -26,16 +26,6 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCameraView;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.video.BackgroundSubtractorMOG2;
-import org.opencv.video.Video;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -53,6 +43,18 @@ import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.DataPreference;
 import kr.durian.duriancam.util.Logger;
 import kr.durian.duriancam.util.MediaScanner;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.JavaCameraView;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.video.BackgroundSubtractorMOG2;
+import org.opencv.video.Video;
 
 /**
  * Created by sunyungkim on 16. 7. 26..
@@ -502,9 +504,16 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+//                        if (!OpenCVLoader.initDebug()) {
+//                            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, SecureActivity.this, mLoaderCallback);
+//                        } else {
+//                            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+//                        }
                         if (!OpenCVLoader.initDebug()) {
-                            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, SecureActivity.this, mLoaderCallback);
+                            Logger.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+                            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, SecureActivity.this, mLoaderCallback);
                         } else {
+                            Logger.d(TAG, "OpenCV library found inside package. Using it!");
                             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
                         }
                     }

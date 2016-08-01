@@ -1,1 +1,2 @@
-include ':app', ':openwebrtc-sdk', ':openCVLibrary300'
+include ':app', ':openwebrtc-sdk'
+include ':openCVLibrary310'

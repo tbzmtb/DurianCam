@@ -46,15 +46,20 @@ import org.json.JSONObject;
 import org.mozilla.javascript.tools.debugger.Main;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.asynctask.InsertUserInfoTask;
+import kr.durian.duriancam.googleutil.IabHelper;
+import kr.durian.duriancam.googleutil.IabResult;
 import kr.durian.duriancam.service.DataService;
 import kr.durian.duriancam.service.IDataService;
 import kr.durian.duriancam.service.IDataServiceCallback;
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.DataPreference;
 import kr.durian.duriancam.util.Logger;
+
+import com.android.vending.billing.IInAppBillingService;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
     public static MainActivity INSTANCE;
@@ -77,10 +82,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private String mPushImageTime = null;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
         Logger.d(TAG, "MainActivity onCreate call");
         INSTANCE = this;
         mHandler = new DataHandler();
@@ -419,7 +427,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
     }
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
