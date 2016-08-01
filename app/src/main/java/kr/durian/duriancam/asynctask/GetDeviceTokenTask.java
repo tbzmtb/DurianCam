@@ -86,7 +86,7 @@ public class GetDeviceTokenTask extends AsyncTask<String, Void, String> {
                     Logger.d(TAG, "array.getJSONObject(i).getString(Config.PARAM_TOKEN) = " + array.getJSONObject(i).getString(Config.PARAM_TOKEN));
                     ids.add(array.getJSONObject(i).getString(Config.PARAM_TOKEN));
                 }
-                new SendPushAsyncTask(mContext, mContext.getString(R.string.detect_notice), mContext.getString(R.string.detect_detail_notice), ids).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                new SendPushAsyncTask(mContext, mContext.getString(R.string.detect_notice), mImageDate, ids).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
             } catch (JSONException e) {
                 e.printStackTrace();

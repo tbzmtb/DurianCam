@@ -56,7 +56,6 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
     private final int RC_SIGN_IN = 0;
     private DataHandler mHandler;
     private ProgressDialog mProgressDialog;
-    private String mPushImageTime = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +86,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
         }
 
     }
+
     private void connectWebSocket() {
         if (mService != null) {
             try {
@@ -281,7 +281,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
 
         @Override
         public void valueChanged(int value, String data) throws RemoteException {
-            Logger.d(TAG,"valueChanged call");
+            Logger.d(TAG, "valueChanged call");
             if (value == Config.HANDLER_MODE_START) {
                 try {
                     JSONObject json = new JSONObject(data);
@@ -289,7 +289,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                         String desciption = json.getString(Config.PARAM_DESCRIPTION);
                         if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
                             startCameraActivity();
-                        }else{
+                        } else {
                             //nothing to do
                         }
                     } else {
@@ -305,16 +305,11 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
     };
 
     private void startCameraActivity() {
-        if (mPushImageTime == null) {
-            Intent intent = new Intent(ViewerModeSelectActivity.this, CameraActivity.class);
-            startActivity(intent);
-        }else{
-            Intent intent = new Intent(ViewerModeSelectActivity.this, ShowDetectedImageActivity.class);
-            intent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, mPushImageTime);
-            startActivity(intent);
-            mPushImageTime = null;
-        }
+        Intent intent = new Intent(ViewerModeSelectActivity.this, CameraActivity.class);
+        startActivity(intent);
+
     }
+
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -419,11 +414,7 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
                 try {
                     mService.registerCallback(mCallbcak);
                     setDefaultMode();
-                    mPushImageTime = getIntent().getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
-                    if (mPushImageTime != null) {
-                        DataPreference.setMode(Config.MODE_VIEWER);
-                        signIn();
-                    }
+
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

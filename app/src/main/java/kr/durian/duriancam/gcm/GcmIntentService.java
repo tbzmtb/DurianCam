@@ -52,6 +52,9 @@ public class GcmIntentService extends IntentService {
                     sendNotification(getString(R.string.detect_notice), getString(R.string.detect_detail_notice), imageTime);
 
                 }
+                Intent newIntent = new Intent(Config.BROADCAST_SECURE_DETECTED);
+                newIntent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, imageTime);
+                sendBroadcast(newIntent);
             }
         }
         GcmBroadcastReceiver.completeWakefulIntent(intent);
@@ -59,7 +62,7 @@ public class GcmIntentService extends IntentService {
 
     private void sendNotification(String title, String message, String imageTime) {
 
-
+        Logger.d(TAG, "imageTime = " + imageTime);
         mNotificationManager = (NotificationManager)
                 getSystemService(Context.NOTIFICATION_SERVICE);
         Intent intent = new Intent(this, NotificationActivity.class);

@@ -115,17 +115,23 @@ public class DeleteDetectedImageActivity extends Activity implements View.OnClic
     private void getDataFromDataBase() {
         Logger.d(TAG, "getDataFromDataBase call");
         mArrayDetectedDeleteData.clear();
+        String rtcid = "";
+        if (DataPreference.getMode() == Config.MODE_VIEWER) {
+            rtcid = DataPreference.getPeerRtcid();
+        } else {
+            rtcid = DataPreference.getRtcid();
+        }
         ContentResolver resolver = getContentResolver();
         Cursor c = resolver.query(CamProvider.MOTION_IMAGE_TABLE_URI, CamSQLiteHelper.TABLE_SECURE_ALL_COLUMNS,
                 CamSQLiteHelper.COL_RTCID + " = ? AND " + CamSQLiteHelper.COL_VIEWR_OR_CAMERA_MODE + " = ? AND " + CamSQLiteHelper.COL_DELETE_VALUE + " = ? ",
-                new String[]{DataPreference.getPeerRtcid(), String.valueOf(DataPreference.getMode()), String.valueOf(Config.NONE_DELETE)}, CamSQLiteHelper.COL_DATE + " desc");
+                new String[]{rtcid, String.valueOf(DataPreference.getMode()), String.valueOf(Config.NONE_DELETE)}, CamSQLiteHelper.COL_DATE + " desc");
         if (c != null && c.moveToFirst()) {
             try {
                 do {
-                    String rtcid = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_RTCID));
+                    String colRtcid = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_RTCID));
                     String path = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_FILE_PATH));
                     long time = c.getLong(c.getColumnIndex(CamSQLiteHelper.COL_DATE));
-                    SecureDetectedData data = new SecureDetectedData(rtcid, path, time, Config.NONE_SELECT);
+                    SecureDetectedData data = new SecureDetectedData(colRtcid, path, time, Config.NONE_SELECT);
                     mArrayDetectedDeleteData.add(data);
                     if (mArrayDetectedDeleteData.size() == MAX_DATA_NUM) {
                         break;
@@ -303,17 +309,19 @@ public class DeleteDetectedImageActivity extends Activity implements View.OnClic
         ArrayList<ContentProviderOperation> operations = new ArrayList<>();
         ContentProviderOperation operation;
         for (SecureDetectedData item : data) {
+            if (DataPreference.getMode() == Config.MODE_VIEWER) {
 
-//            operation = ContentProviderOperation
-//                    .newDelete(CamProvider.MOTION_IMAGE_TABLE_URI)
-//                    .withSelection(CamSQLiteHelper.COL_FILE_PATH + " = ?", new String[]{item.getImagePath()})
-//                    .build();
-            operation = ContentProviderOperation
-                    .newUpdate(CamProvider.MOTION_IMAGE_TABLE_URI)
-                    .withSelection(CamSQLiteHelper.COL_FILE_PATH + " = ?", new String[]{item.getImagePath()})
-                    .withValue(CamSQLiteHelper.COL_DELETE_VALUE, Config.DELETE)
-                    .build();
-
+                operation = ContentProviderOperation
+                        .newUpdate(CamProvider.MOTION_IMAGE_TABLE_URI)
+                        .withSelection(CamSQLiteHelper.COL_FILE_PATH + " = ?", new String[]{item.getImagePath()})
+                        .withValue(CamSQLiteHelper.COL_DELETE_VALUE, Config.DELETE)
+                        .build();
+            } else {
+                operation = ContentProviderOperation
+                        .newDelete(CamProvider.MOTION_IMAGE_TABLE_URI)
+                        .withSelection(CamSQLiteHelper.COL_FILE_PATH + " = ?", new String[]{item.getImagePath()})
+                        .build();
+            }
             operations.add(operation);
             File file = new File(item.getImagePath());
             boolean b = file.delete();

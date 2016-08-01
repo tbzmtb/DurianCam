@@ -1,5 +1,6 @@
 package kr.durian.duriancam.activity;
 
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String SENDER_ID = "175455013954";
     public static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
+    private String mPushImageTime = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,17 +231,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         Logger.d(TAG, "MainActivity onResume Call");
-        if (checkPlayServices()) {
-            gcm = GoogleCloudMessaging.getInstance(this);
-            regid = getRegistrationId(MainActivity.this);
+        if (Config.GOOGLE_SERVICE_ENABLE_DEVICE) {
+            if (checkPlayServices()) {
+                gcm = GoogleCloudMessaging.getInstance(this);
+                regid = getRegistrationId(MainActivity.this);
 
-            if (regid.isEmpty()) {
-                registerInBackground();
+                if (regid.isEmpty()) {
+                    registerInBackground();
+                }
+            } else {
+                Logger.d(TAG, "No valid Google Play Services APK found.");
             }
-        } else {
-            Logger.d(TAG, "No valid Google Play Services APK found.");
         }
     }
+
 
     private boolean checkPlayServices() {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
@@ -249,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
                         .show();
             } else {
-                Log.i(TAG, "This device is not supported.");
+                Logger.d(TAG, "This device is not supported.");
                 finish();
             }
             return false;
@@ -287,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
-    private void setRegisterCallback(){
+    private void setRegisterCallback() {
         try {
             mService.registerCallback(mCallbcak);
         } catch (RemoteException e) {
@@ -295,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void unRegisterCallback(){
+    private void unRegisterCallback() {
         if (mService != null) {
             try {
                 mService.unregisterCallback(mCallbcak);
@@ -312,6 +317,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (service != null) {
                 mService = IDataService.Stub.asInterface(service);
                 setDefaultMode();
+                mPushImageTime = getIntent().getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
+                if (mPushImageTime != null) {
+                    DataPreference.setMode(Config.MODE_VIEWER);
+                    setDefaultMode();
+                    mStartButton.callOnClick();
+                }
 
             }
         }
@@ -412,11 +423,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        try {
+            super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
+            if (requestCode == RC_SIGN_IN) {
+                GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+                handleSignInResult(result);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -519,23 +534,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void valueChanged(int value, String data) throws RemoteException {
             unRegisterCallback();
-            Logger.d(TAG,"valueChanged call");
+            Logger.d(TAG, "valueChanged call");
             if (value == Config.HANDLER_MODE_START) {
                 try {
                     JSONObject json = new JSONObject(data);
                     if (!json.isNull(Config.PARAM_DESCRIPTION)) {
                         String desciption = json.getString(Config.PARAM_DESCRIPTION);
                         if (desciption.equals(Config.PARAM_SUCCESS_DESCRIPTION)) {
-                            if (DataPreference.getMode() == Config.MODE_CAMERA) {
-                                Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-                                startActivity(intent);
-                            }
+                            startCameraActivity();
                         }
                     } else {
-                        if (DataPreference.getMode() == Config.MODE_CAMERA) {
-                            Intent intent = new Intent(MainActivity.this, CameraActivity.class);
-                            startActivity(intent);
-                        }
+                        startCameraActivity();
+
                     }
 
                 } catch (JSONException e) {
@@ -544,6 +554,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+
+    private void startCameraActivity() {
+        Intent intent = new Intent(MainActivity.this, CameraActivity.class);
+        startActivity(intent);
+    }
 
     private void setDefaultMode() {
         AllButtonUnselected();
@@ -565,8 +580,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.sign_in_button:
                 setRegisterCallback();
                 if (DataPreference.getMode() == Config.MODE_VIEWER) {
-                    Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
-                    startActivity(intent);
+                    if (mPushImageTime == null) {
+                        Intent intent = new Intent(MainActivity.this, ViewerModeSelectActivity.class);
+                        startActivity(intent);
+                    } else {
+                        Logger.d(TAG, "mPushImageTime = " + mPushImageTime);
+                        Intent intent = new Intent(MainActivity.this, SettingActivity.class);
+                        intent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, mPushImageTime);
+                        startActivity(intent);
+                        mPushImageTime = null;
+                    }
+                    unRegisterCallback();
                 } else {
                     signIn();
                 }

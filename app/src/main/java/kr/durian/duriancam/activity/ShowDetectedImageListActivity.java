@@ -1,11 +1,13 @@
 package kr.durian.duriancam.activity;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
@@ -41,7 +43,7 @@ import kr.durian.duriancam.util.Logger;
 /**
  * Created by sunyungkim on 16. 7. 29..
  */
-public class ShowDetectedImageActivity extends Activity implements View.OnClickListener {
+public class ShowDetectedImageListActivity extends Activity implements View.OnClickListener {
     private String mPushImageTime;
     private IDataService mService;
     private final String TAG = getClass().getName();
@@ -55,7 +57,7 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Logger.d(TAG, "ShowDetectedImageActivity oncreate call");
+        Logger.d(TAG, "ShowDetectedImageListActivity oncreate call");
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_show_detected_image);
@@ -74,7 +76,7 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             SecureDetectedData data = ((SecureDetectedListAdapter) parent.getAdapter()).getData().get(position);
-            Intent intent = new Intent(ShowDetectedImageActivity.this, DetectedItemDetailActivity.class);
+            Intent intent = new Intent(ShowDetectedImageListActivity.this, DetectedItemDetailActivity.class);
             intent.putExtra("selected_data", data);
             startActivity(intent);
 
@@ -86,11 +88,17 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
         super.onResume();
         bindService(new Intent(this,
                 DataService.class), mConnection, Context.BIND_AUTO_CREATE);
+        IntentFilter intentFilter = new IntentFilter(Config.BROADCAST_SECURE_DETECTED);
+
+        registerReceiver(mSecurePushReceiver, intentFilter);
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterServiceCallback();
+        unregisterReceiver(mSecurePushReceiver);
         unbindService(mConnection);
 
     }
@@ -115,17 +123,23 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
     private void getDataFromDataBase() {
         Logger.d(TAG, "getDataFromDataBase call");
         mArrayDetectedData.clear();
+        String rtcid = "";
+        if(DataPreference.getMode() == Config.MODE_VIEWER){
+            rtcid = DataPreference.getPeerRtcid();
+        }else {
+            rtcid = DataPreference.getRtcid();
+        }
         ContentResolver resolver = getContentResolver();
         Cursor c = resolver.query(CamProvider.MOTION_IMAGE_TABLE_URI, CamSQLiteHelper.TABLE_SECURE_ALL_COLUMNS,
                 CamSQLiteHelper.COL_RTCID + " = ? AND " + CamSQLiteHelper.COL_VIEWR_OR_CAMERA_MODE + " = ? AND " + CamSQLiteHelper.COL_DELETE_VALUE + " = ? ",
-                new String[]{DataPreference.getPeerRtcid(), String.valueOf(DataPreference.getMode()), String.valueOf(Config.NONE_DELETE)}, CamSQLiteHelper.COL_DATE + " desc");
+                new String[]{rtcid, String.valueOf(DataPreference.getMode()), String.valueOf(Config.NONE_DELETE)}, CamSQLiteHelper.COL_DATE + " desc");
         if (c != null && c.moveToFirst()) {
             try {
                 do {
-                    String rtcid = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_RTCID));
+                    String colRtcid = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_RTCID));
                     String path = c.getString(c.getColumnIndex(CamSQLiteHelper.COL_FILE_PATH));
                     long time = c.getLong(c.getColumnIndex(CamSQLiteHelper.COL_DATE));
-                    SecureDetectedData data = new SecureDetectedData(rtcid, path, time, Config.NONE_SELECT);
+                    SecureDetectedData data = new SecureDetectedData(colRtcid, path, time, Config.NONE_SELECT);
                     mArrayDetectedData.add(data);
                     if (mArrayDetectedData.size() == MAX_DATA_NUM) {
                         break;
@@ -141,6 +155,18 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
         mDetectedAdapter.notifyDataSetChanged();
     }
 
+    private BroadcastReceiver mSecurePushReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Config.BROADCAST_SECURE_DETECTED)) {
+                // 액티비티 실행중 감지가 오는경우
+                if (mService != null) {
+                    getDataFromPeerServer();
+                }
+            }
+        }
+    };
+
     ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -149,16 +175,14 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
                 mService = IDataService.Stub.asInterface(service);
                 registerServiceCallback();
                 getDataFromDataBase();
-                getDataFromPeerServer();
-//                mPushImageTime = getIntent().getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
-//                sendSecureImageRequestData(mPushImageTime);
-
+                if (DataPreference.getMode() == Config.MODE_VIEWER) {
+                    getDataFromPeerServer();
+                }
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            unregisterServiceCallback();
             mService = null;
         }
     };
@@ -364,7 +388,7 @@ public class ShowDetectedImageActivity extends Activity implements View.OnClickL
                 finish();
                 break;
             case R.id.btn_delete:
-                Intent intent = new Intent(ShowDetectedImageActivity.this, DeleteDetectedImageActivity.class);
+                Intent intent = new Intent(ShowDetectedImageListActivity.this, DeleteDetectedImageActivity.class);
                 startActivity(intent);
                 break;
 

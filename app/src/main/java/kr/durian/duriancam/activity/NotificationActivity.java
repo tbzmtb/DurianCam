@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import org.mozilla.javascript.tools.debugger.Main;
+
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.Logger;
 
@@ -22,12 +24,13 @@ public class NotificationActivity extends AppCompatActivity {
         Logger.d(TAG, "imageTime = " + imageTime);
         if (isTaskRoot()) {
             Logger.d(TAG, "isTaskRoot call ");
-            Intent startIntent = new Intent(this, ViewerModeSelectActivity.class);
+            Intent startIntent = new Intent(this, MainActivity.class);
             startIntent.putExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY, imageTime);
             startActivity(startIntent);
         }
         else {
             Logger.d(TAG, "already start app send broadcast");
+
         }
         finish();
     }

@@ -467,9 +467,9 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     @Override
     public void onError(MediaRecorder mr, int what, int extra) {
         stopRecording();
-        if (mCameraViewListener != null) {
-            mCameraViewListener.onRecordingError();
-        }
+//        if (mCameraViewListener != null) {
+//            mCameraViewListener.onRecordingError();
+//        }
     }
 
     public void pictureTaken(String file_path, String log, String time) {

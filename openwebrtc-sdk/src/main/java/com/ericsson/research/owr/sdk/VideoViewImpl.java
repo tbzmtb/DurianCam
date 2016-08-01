@@ -63,7 +63,8 @@ public class VideoViewImpl implements VideoView, MediaSourceListener {
             mVideoRenderer.setMaxFramerate(framerate);
         }
 
-        mVideoRenderer.setMaxFramerate(8.0);
+//        mVideoRenderer.setMaxFramerate(8.0);
+        mVideoRenderer.setMaxFramerate(16.0);
         mVideoRenderer.setWidth(640);
         mVideoRenderer.setHeight(480);
 

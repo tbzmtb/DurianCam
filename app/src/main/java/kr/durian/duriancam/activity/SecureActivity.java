@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,7 +81,7 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
     private int mSecureStartCount = -1;
     private boolean isRecording = false;
     private RelativeLayout mDimLayout;
-
+    public long SDCARD_SIZE_LIMITED = 100;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -467,6 +468,7 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
             values.put(CamSQLiteHelper.COL_FILE_PATH, path);
             values.put(CamSQLiteHelper.COL_DATE, date);
             values.put(CamSQLiteHelper.COL_VIEWR_OR_CAMERA_MODE, String.valueOf(DataPreference.getMode()));
+            values.put(CamSQLiteHelper.COL_DELETE_VALUE, Config.NONE_DELETE);
             ContentResolver resolver = getContentResolver();
             resolver.insert(CamProvider.MOTION_IMAGE_TABLE_URI, values);
         } catch (Exception e) {
@@ -487,6 +489,9 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (service != null) {
+                if(Config.getSDCardAvailableSpaceInMB()< SDCARD_SIZE_LIMITED){
+                    Toast.makeText(SecureActivity.this, getString(R.string.you_need_to_check_available_memory),Toast.LENGTH_LONG).show();
+                }
                 mService = IDataService.Stub.asInterface(service);
                 setOverLayMainText(getString(R.string.ready_to_detect_mode));
                 mRecordingEnable = DataPreference.getVideoRecordingEnable();

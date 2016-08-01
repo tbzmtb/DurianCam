@@ -18,6 +18,7 @@ import java.util.Date;
 import kr.durian.duriancam.R;
 import kr.durian.duriancam.data.SecureDetectedData;
 import kr.durian.duriancam.util.Logger;
+import uk.co.senab.photoview.PhotoViewAttacher;
 
 /**
  * Created by sunyungkim on 16. 7. 31..
@@ -27,10 +28,11 @@ public class DetectedItemDetailActivity extends Activity implements View.OnClick
     private ImageButton mBtnBack;
     private ImageView mDetailImage;
     private TextView mDateText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Logger.d(TAG, "ShowDetectedImageActivity oncreate call");
+        Logger.d(TAG, "ShowDetectedImageListActivity oncreate call");
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_detected_item_detail);
@@ -43,6 +45,7 @@ public class DetectedItemDetailActivity extends Activity implements View.OnClick
                 .load(data.getImagePath())
                 .into(mDetailImage);
         mDateText.setText(getTimeString(data.getTime()));
+        PhotoViewAttacher mAttacher = new PhotoViewAttacher(mDetailImage);
     }
 
     public String getTimeString(long time) {

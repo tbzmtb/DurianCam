@@ -1,11 +1,13 @@
 package kr.durian.duriancam.activity;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
@@ -108,7 +110,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private long backKeyPressedTime;
     private ImageButton mSecureSettingBack;
     private Toast toast;
-    private final int CHECK_DELAY_COUNT = 60000 * 20;
+    private final int CHECK_DELAY_COUNT = 60000 * 4;
 //    private final int CHECK_DELAY_COUNT = 5000;
 
     @Override
@@ -378,9 +380,21 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     protected void onPause() {
         super.onPause();
         Logger.d(TAG, "CameraActivity onPause Call");
-
+        unregisterReceiver(mSecurePushReceiver);
     }
 
+    private BroadcastReceiver mSecurePushReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Config.BROADCAST_SECURE_DETECTED)) {
+                if (mService != null) {
+                    String imageTime = intent.getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
+                    Logger.d(TAG, "iamgeTime = " + imageTime);
+                    Toast.makeText(CameraActivity.this, getString(R.string.detect_detail_notice), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    };
 
     public void unCallHandler() {
         if (mHandler != null) {
@@ -455,7 +469,8 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     protected void onResume() {
         super.onResume();
         Logger.d(TAG, "CameraActivity onResume Call");
-
+        IntentFilter intentFilter = new IntentFilter(Config.BROADCAST_SECURE_DETECTED);
+        registerReceiver(mSecurePushReceiver, intentFilter);
     }
 
     public void onBackPressed() {
@@ -525,7 +540,7 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
     private void unregisterServiceCallback() {
         try {
             boolean b = mService.unregisterCallback(mCallbcak);
-            Logger.d(TAG, "unregisterCallback1 call = ", b);
+            Logger.d(TAG, "unregisterServiceCallback call = ", b);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -1354,7 +1369,8 @@ public class CameraActivity extends AppCompatActivity implements TextureView.Sur
             }
             remoteViewTimestemp = mRemoteView.checkVideoView();
         }
-        if (checkBuffferDataCount > 3) {
+        Logger.d(TAG, "checkBufferDataIfErrorThenFinish call " + checkBuffferDataCount);
+        if (checkBuffferDataCount > 10) {
             finish();
             return;
         }

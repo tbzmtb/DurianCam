@@ -5,17 +5,12 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.os.Environment;
 import android.util.Base64;
-import android.util.TypedValue;
-import android.view.Display;
-import android.view.WindowManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -73,15 +68,9 @@ public class Config {
 
     public static final String BROADCAST_FINISH_SECURE = "broadcast_finish_secure";
     public static final String BROADCAST_CHANGE_SECURE_OPTION = "broadcast_change_secure_option";
-
-    public static final int PARKING_DATA = 1000;
-    public static final int PARKING_LOT_DATA_HANDLER = PARKING_DATA * 0x01;
-    public static final int PARKING_SEVER_DATA_HANDLER = PARKING_DATA * 0x02;
-    public static final int INSERT_USER_INFO_HANDLER = PARKING_DATA * 0x03;
-
-    private static int sScreenWidthDP = -1;
-    private static int sScreenWidth = -1;
-    private static int sScreenHeight = -1;
+    public static final String BROADCAST_SECURE_DETECTED = "broadcast_seucre_detected";
+    public static final int DURIAN_CAM_DATA = 1000;
+    public static final int INSERT_USER_INFO_HANDLER = DURIAN_CAM_DATA * 0x01;
 
     public static final String PREF_LOGIN_NAME_KEY = "login_name_key";
     public static final String PREF_PUSH_ENABLE_KEY = "push_enable_key";
@@ -106,9 +95,6 @@ public class Config {
     public static final int MODE_SECURE = 5;
     public static final int MODE_VIEWER = 2;
     public static final int MODE_CAMERA = 4;
-
-    public static final int SCREEN_OFF = 0;
-    public static final int SCREEN_ON = 1;
 
     public static final String VIDEO_RECORDING_OFF = "0";
     public static final String VIDEO_RECORDING_ON = "1";
@@ -165,13 +151,30 @@ public class Config {
     public static final String PARAM_GET_CONFIG_ACK = "getconfig_ack";
     public static final String IMAGE_FILE_EXTENTION = ".jpg";
     public static final String VIDEO_FILE_EXTENTION = ".3gp";
-    public static final String TOUCH_PUSH_NOTIFICATION_WHEN_APP_RUNNING  ="touch_push_notification_when_app_running";
+    public static final int MAX_BITMAP_SIZE = 1280;
+    public final static long SIZE_KB = 1024L;
+    public final static long SIZE_MB = SIZE_KB * SIZE_KB;
+
     public static String getSaveImageFileExternalDirectory() {
         File fileRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "DurianCam");
         if (!fileRoot.exists()) {
             fileRoot.mkdir();
         }
         return fileRoot.getPath() + File.separator;
+    }
+
+    public static long getSDCardAvailableSpaceInMB() {
+        return getExternalAvailableSpaceInBytes() / SIZE_MB;
+    }
+
+    public static long getExternalAvailableSpaceInBytes() {
+        try {
+            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+            return file.getFreeSpace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public static String getRoot() {
@@ -195,9 +198,11 @@ public class Config {
     }
 
     public static String getByteStringForSecureImage(File file) {
-        return Base64.encodeToString(getBytesFromBitmap(BitmapFactory.decodeFile(file.getPath())),
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getPath());
+        return Base64.encodeToString(getBytesFromBitmap(resizeBitmapImageFn(bitmap, MAX_BITMAP_SIZE)),
                 Base64.NO_WRAP);
     }
+
     public static String getFileName(String path) {
         int count = path.split(File.separator).length;
         String filename = "";
@@ -206,6 +211,7 @@ public class Config {
         }
         return filename;
     }
+
     public static byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
@@ -224,5 +230,31 @@ public class Config {
         } else {
             return "";
         }
+    }
+
+    public static Bitmap resizeBitmapImageFn(Bitmap bmpSource, int maxResolution) {
+        int iWidth = bmpSource.getWidth();      //비트맵이미지의 넓이
+        int iHeight = bmpSource.getHeight();     //비트맵이미지의 높이
+        int newWidth = iWidth;
+        int newHeight = iHeight;
+        float rate;
+
+        //이미지의 가로 세로 비율에 맞게 조절
+        if (iWidth > iHeight) {
+            if (maxResolution < iWidth) {
+                rate = maxResolution / (float) iWidth;
+                newHeight = (int) (iHeight * rate);
+                newWidth = maxResolution;
+            }
+        } else {
+            if (maxResolution < iHeight) {
+                rate = maxResolution / (float) iHeight;
+                newWidth = (int) (iWidth * rate);
+                newHeight = maxResolution;
+            }
+        }
+
+        return Bitmap.createScaledBitmap(
+                bmpSource, newWidth, newHeight, true);
     }
 }

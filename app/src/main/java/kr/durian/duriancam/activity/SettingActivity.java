@@ -8,12 +8,8 @@ import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -23,18 +19,17 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import kr.durian.duriancam.R;
-import kr.durian.duriancam.asynctask.InsertUserInfoTask;
 import kr.durian.duriancam.service.DataService;
 import kr.durian.duriancam.service.IDataService;
 import kr.durian.duriancam.service.IDataServiceCallback;
 import kr.durian.duriancam.util.Config;
 import kr.durian.duriancam.util.DataPreference;
+import kr.durian.duriancam.util.Logger;
 
 /**
  * Created by tbzm on 16. 5. 11.
@@ -48,7 +43,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     private TextView mVersionText;
     private Switch mMotionDetectPushOnOffSwitch;
     private RelativeLayout mDetectedDataLayout;
-
+    private String mPushImageTime;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +63,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         mVersionText.setText(getVersionName());
         mDetectedDataLayout = (RelativeLayout) findViewById(R.id.detected_data_layout);
         mDetectedDataLayout.setOnClickListener(this);
+        mPushImageTime = getIntent().getStringExtra(Config.PUSH_IMAGE_TIME_INTENT_KEY);
+
     }
 
     @Override
@@ -105,7 +102,11 @@ public class SettingActivity extends Activity implements View.OnClickListener {
                 mService = IDataService.Stub.asInterface(service);
                 try {
                     mService.registerCallback(mCallbcak);
-
+                    Logger.d(TAG,"pushImageTime = "+mPushImageTime);
+                    if (mPushImageTime != null) {
+                        mDetectedDataLayout.callOnClick();
+                        mPushImageTime = null;
+                    }
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -143,8 +144,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    private void startShowDetectedImageActivity(){
-        Intent intent = new Intent(SettingActivity.this, ShowDetectedImageActivity.class);
+    private void startShowDetectedImageActivity() {
+        Intent intent = new Intent(SettingActivity.this, ShowDetectedImageListActivity.class);
         startActivity(intent);
     }
 
