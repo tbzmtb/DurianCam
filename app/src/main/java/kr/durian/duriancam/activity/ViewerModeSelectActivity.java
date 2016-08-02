@@ -562,12 +562,13 @@ public class ViewerModeSelectActivity extends AppCompatActivity implements View.
             }
             case R.id.detection_dim_layout: {
                 if (DataPreference.getRtcid() == null) {
+                    Toast.makeText(ViewerModeSelectActivity.this, getString(R.string.you_have_to_google_login_first), Toast.LENGTH_SHORT).show();
                     return;
                 }
-//                if (!DataPreference.getInAppPayment()) {
-//                    new GetInAppPaymentTask(ViewerModeSelectActivity.this, mPaymentHandler).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-//                }
-                Toast.makeText(ViewerModeSelectActivity.this, getString(R.string.not_supported_right_now),Toast.LENGTH_SHORT).show();
+                if (!DataPreference.getInAppPayment()) {
+                    new GetInAppPaymentTask(ViewerModeSelectActivity.this, mPaymentHandler).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                }
+//                Toast.makeText(ViewerModeSelectActivity.this, getString(R.string.not_supported_right_now),Toast.LENGTH_SHORT).show();
                 break;
             }
         }

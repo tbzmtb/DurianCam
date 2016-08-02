@@ -39,4 +39,5 @@
     <string name="you_need_to_check_available_memory">메모리 여유 공간을 확인해 주세요</string>
     <string name="please_check_network_state">네트워크 상태가 불안정하여 연결이 종료됩니다</string>
     <string name="not_supported_right_now">준비 중입니다.</string>
+    <string name="you_have_to_google_login_first">최초에 한번 구글 로그인이 필요합니다. CCTV를 연결해주세요.</string>
 </resources>

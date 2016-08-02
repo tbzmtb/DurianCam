@@ -38,4 +38,5 @@
     <string name="you_need_to_check_available_memory">You need to check available memory.</string>
     <string name="please_check_network_state">Please check your network state.</string>
     <string name="not_supported_right_now">Coming soon</string>
+    <string name="you_have_to_google_login_first">You need a Google sign in once .</string>
 </resources>
