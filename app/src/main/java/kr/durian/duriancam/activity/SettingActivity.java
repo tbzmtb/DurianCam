@@ -79,6 +79,11 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         if (mScreenOnOffSwitch != null) {
             mScreenOnOffSwitch.setChecked(screenValue);
         }
+        boolean pushValue = DataPreference.getPushEnable();
+
+        if(mMotionDetectPushOnOffSwitch != null){
+            mMotionDetectPushOnOffSwitch.setChecked(pushValue);
+        }
         bindService(new Intent(this,
                 DataService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
