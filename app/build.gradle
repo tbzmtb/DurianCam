@@ -8,8 +8,8 @@ android {
         applicationId "kr.durian.duriancam"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 8
-        versionName "4.1"
+        versionCode 9
+        versionName "4.2"
         multiDexEnabled true
     }
 
