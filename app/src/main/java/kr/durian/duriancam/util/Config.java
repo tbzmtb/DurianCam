@@ -101,7 +101,7 @@ public class Config {
 
     public static final String VIDEO_RECORDING_OFF = "0";
     public static final String VIDEO_RECORDING_ON = "1";
-    public static final String VIDEO_RECORDING_DEFAULT_VALUE = VIDEO_RECORDING_ON;
+    public static final String VIDEO_RECORDING_DEFAULT_VALUE = VIDEO_RECORDING_OFF;
 
     public static final String VIDEO_DETECT_SENSITIVITY_DEFAULT_VALUE = "50";
     public static final String DISPLAY_HIDE_OFF = "0";

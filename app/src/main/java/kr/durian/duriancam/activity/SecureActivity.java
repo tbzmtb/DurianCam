@@ -72,7 +72,7 @@ public class SecureActivity extends AppCompatActivity implements CameraBridgeVie
     private double mLearningRate = 0.5;
     private String mRecordingEnable = DataPreference.getVideoRecordingEnable();
     private String mDetectSenesitivity = DataPreference.getDetectSensitivity();
-    private int mVideoRecordingTimeSecond = 60;
+    private int mVideoRecordingTimeSecond = 10;
     private int mSecurityStartTimeSecond = 10;
     private int mRretryDetectTime = 3;
     private TimerHandler mTimeHandler;

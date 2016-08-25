@@ -10,7 +10,7 @@
     <string name="btn_start">Start</string>
     <string name="please_wait">Please wait for a while</string>
     <string name="fail_login">Login fail. Please retry.</string>
-    <string name="wait_for_view">Wait for Viewer</string>
+    <string name="wait_for_view">If you connect the viewer from the other smartphones are connected to each other.</string>
     <string name="wait_for_connection">Wait for a connection</string>
     <string name="backbutton_click_is_finish">Press again to exit DurianCam</string>
     <string name="app_version">App Ver.</string>

@@ -8,8 +8,8 @@ android {
         applicationId "kr.durian.duriancam"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 5
-        versionName "3.2"
+        versionCode 8
+        versionName "4.1"
         multiDexEnabled true
     }
 
@@ -42,9 +42,9 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile project(':openwebrtc-sdk')
     compile project(':openCVLibrary310')
     testCompile 'junit:junit:4.12'
+    compile project(':openwebrtc-sdk')
     //    compile 'com.google.android.gms:play-services:8.3.0'
     //    compile 'io.openwebrtc:openwebrtc-android-sdk:0.1.0'
     compile 'com.android.support:appcompat-v7:22.1.1'

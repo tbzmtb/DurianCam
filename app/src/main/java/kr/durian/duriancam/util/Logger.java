@@ -5,11 +5,11 @@ import android.util.Log;
 
 public class Logger {
 
-	private static boolean isVerboseEnable = false;
-	private static boolean isDebugEnable = false;
-	private static boolean isInfoEnable = false;
-	private static boolean isWarnEnable = false;
-	private static boolean isErrorEnable = false;
+	private static boolean isVerboseEnable = true;
+	private static boolean isDebugEnable = true;
+	private static boolean isInfoEnable = true;
+	private static boolean isWarnEnable = true;
+	private static boolean isErrorEnable = true;
 
 	public static void setVerboseEnabled(boolean isEnable) {
 		isVerboseEnable = isEnable;

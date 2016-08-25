@@ -11,8 +11,8 @@
     <string name="btn_start">시작</string>
     <string name="please_wait">잠시만 기다려 주세요</string>
     <string name="fail_login">로그인에 실패 하였습니다. 다시 시도해주세요</string>
-    <string name="wait_for_view">뷰어를 기다리는 중입니다.</string>
-    <string name="wait_for_connection">연결을 기다리는 중입니다.</string>
+    <string name="wait_for_view">다른 스마트폰에서 뷰어로 접속하면 서로 연결 됩니다.</string>
+    <string name="wait_for_connection">다른 스마트폰에서 카메라로 접속하면 서로 연결 됩니다.</string>
     <string name="backbutton_click_is_finish"><![CDATA["'"]]>뒤로<![CDATA["'"]]>버튼을 한번 더 누르시면 종료됩니다.</string>
     <string name="app_version">앱 버전</string>
     <string name="web_client_id">175455013954-b689lntjl9mmqmmln0qegdu7q7cetqja.apps.googleusercontent.com</string>
